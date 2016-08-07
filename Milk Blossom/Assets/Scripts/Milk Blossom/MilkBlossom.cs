@@ -63,6 +63,8 @@ public class MilkBlossom : MonoBehaviour
     public GameObject[] pointsObjects;
     public GameObject bigWheel;
     public GameObject hexTile;
+    // Tile things
+    static Sprite[] tileSprites;
     hexGrid liveHexGrid;
     public int hexGridx = 5;
     public int hexGridy = 5;
@@ -89,6 +91,8 @@ public class MilkBlossom : MonoBehaviour
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
+
+
 
     // player info
     public GameObject playerObject;
@@ -292,6 +296,19 @@ public class MilkBlossom : MonoBehaviour
 
                 GameObject newTileObject = (GameObject)Instantiate(hexTile, tileList[t].offsetPosition, Quaternion.identity);
                 tileList[t].tileObject = newTileObject;
+                // Set Tile Sprite 
+                try
+
+                {
+                    int spriteType = Random.Range(0, tileSprites.Length);
+                    tileList[t].tileObject.GetComponent<SpriteRenderer>().sprite = tileSprites[spriteType];
+                  
+                }
+                catch
+                {
+                    Debug.Log("Sprite for tile could not be set");
+
+                }
                 tileList[t].tileObject.transform.parent = GameObject.Find("HexGrid").transform;
                 tileList[t].tileObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
                 yield return new WaitForSeconds(standardDelay);
@@ -575,6 +592,12 @@ public class MilkBlossom : MonoBehaviour
                 AddDebugText(tileList[i].tileObject, "");
             }
         }
+    }
+
+    void Awake()
+    {
+
+        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite1");
     }
 
     // Use this for initialization
