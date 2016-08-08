@@ -7,6 +7,7 @@ using System.Collections.Generic;
 
 public class MilkBlossom : MonoBehaviour
 {
+    // TODO 
 
     // Making a Hey That's My Fish variant with a custom controller
     // Basic gameplay: Hex grid
@@ -215,7 +216,7 @@ public class MilkBlossom : MonoBehaviour
 
             if (!active)
             {
-                tileObject.GetComponent<HexBehaviour>().DropTile(12f);
+                //tileObject.GetComponent<HexBehaviour>().DropTile(12f);
                 tilePointsObject.SetActive(false);
 
             }
@@ -470,11 +471,7 @@ public class MilkBlossom : MonoBehaviour
         {
             tileToLeave.SetOccupied(false);
             tileToLeave.SetActive(false);
-
-
-            // set tile to fall shrink and fall into nothing
-            //tileToLeave
-
+            tileToLeave.tileObject.SetActive(false);
 
         }
 
@@ -952,11 +949,12 @@ public class MilkBlossom : MonoBehaviour
         {
             int hiPlayer = 0;
             int hiScore = 0;
-            for (int i = 0; i < playerList.Count; i++)
+            for (int i = 0; i < players; i++)
             {
                 if (playerList[i].GetPoints() > hiScore)
                 {
-                    hiPlayer = i;
+                    hiPlayer = i + 1;
+                    hiScore = playerList[i].GetPoints();
                 }
 
             }
