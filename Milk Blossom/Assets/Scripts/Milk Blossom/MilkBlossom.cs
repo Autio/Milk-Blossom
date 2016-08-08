@@ -94,10 +94,10 @@ public class MilkBlossom : MonoBehaviour
     Camera mainCam;
     private enum states { starting, planning, live, moving, ending, paused };
     states currentState = states.starting;
+    bool firstTurn = true;
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
-
 
 
     // player info
@@ -328,8 +328,6 @@ public class MilkBlossom : MonoBehaviour
             // select starting player
             activeTile = SelectPlayer(0);
 
-            
-
         }
 
         public void AllocatePoints()
@@ -414,13 +412,11 @@ public class MilkBlossom : MonoBehaviour
                         //yield return new WaitForSeconds(standardDelay);
                         GameObject newPlayer = (GameObject)Instantiate(playerObject, new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, -0.5f), Quaternion.identity);
                         // set player text
-                        newPlayer.transform.FindChild("PlayerLabel").GetComponent<TextMesh>().text = "P" + p.ToString();
+                        newPlayer.transform.FindChild("PlayerSprite").transform.FindChild("PlayerLabel").GetComponent<TextMesh>().text = "P" + p.ToString();
                         chosenTile.SetOccupied(true);
                         player pl = new player();
                         playerList.Add(pl);
                         pl.playerNumber = p;
-
-
                         pl.playerTile = chosenTile;
                         pl.playerGameObject = newPlayer;
                         pl.playerWheelTransform = newPlayer.transform.FindChild("PlayerWheels");
@@ -435,7 +431,7 @@ public class MilkBlossom : MonoBehaviour
                         {
                             if (!pl.GetAI())
                             {
-                                pl.playerGameObject.GetComponent<TouchDrag>().enabled = true;
+                                pl.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
                             }
                         }
 
@@ -644,17 +640,17 @@ public class MilkBlossom : MonoBehaviour
         {
             if (p.playerNumber != (activePlayer + 1))
             {
-                p.playerGameObject.GetComponent<TouchDrag>().enabled = false;
+                p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
             }
             else
             {
                 if (p.GetAI())
                 {
-                    p.playerGameObject.GetComponent<TouchDrag>().enabled = false;
+                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                 }
                 else
                 {
-                    p.playerGameObject.GetComponent<TouchDrag>().enabled = true;
+                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
                 }
             }
         }
@@ -672,6 +668,10 @@ public class MilkBlossom : MonoBehaviour
 
         // Only the current player can be dragged and dropped, if it's not an AI
         SetPlayerDraggability();
+
+        // Show all possible moves when dragging & dropping
+        AllAllowedMovesHighlighter(activeTile);
+
 
         if (!ValidMoves(playerList[activePlayer]))
         {
@@ -730,6 +730,12 @@ public class MilkBlossom : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
     }
 
+    IEnumerator Wait(float waitTime)
+    {
+        yield return new WaitForSeconds(waitTime);
+        AllAllowedMovesHighlighter(activeTile);
+    }
+
     void InitGame()
     {
         // create grid, allocate points and allocate players
@@ -759,7 +765,6 @@ public class MilkBlossom : MonoBehaviour
                 scoreObjects[i].transform.GetComponent<Text>().text = "0\n" + "P" + (i + 1).ToString();
             }
         }
-
 
     }
 
@@ -795,6 +800,11 @@ public class MilkBlossom : MonoBehaviour
 
         if (currentState == states.live)
         {
+            if(firstTurn)
+            {
+                AllAllowedMovesHighlighter(activeTile);
+                firstTurn = false;
+            }
             // TURN TIMER
             // only count for human players
             if (timed)
@@ -931,15 +941,8 @@ public class MilkBlossom : MonoBehaviour
 
             }
 
+            tile targetTile = null;
 
-
-
-
-
-
-
-
-                tile targetTile = null;
             if (Input.GetKey(KeyCode.T))
             {
                 PseudoAIMove(playerList[activePlayer]);
@@ -972,7 +975,8 @@ public class MilkBlossom : MonoBehaviour
                 else
                 {
                     turnCooldown = 0.03f;
-                    targetTile = LinearHighlighter(activeTile, currentDir, targetRange);
+
+                    //  targetTile = LinearHighlighter(activeTile, currentDir, targetRange);
                 }
                 
 
@@ -1078,13 +1082,72 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
+    void AllAllowedMovesHighlighter(tile sourceTile)
+    {
+        // Unhighlight all tiles
+        foreach (tile t in tileList)
+        {
+             t.SetHighlight(false);
+        }
+        try
+        {
+            sourceTile.SetHighlight(true);
+        }
+        catch
+        {
+            Debug.Log("Could not highlight sourcetile");
+
+        }
+        for (int d = 0; d < 6; d++)
+        {
+            bool directionBlocked = false;
+            for (int r = 1; r <= (hexGridRadius * 2); r++)
+            {
+
+                Vector3 relativeTargetPosition = directions[d] * r;
+                // try and step to the next tile in the direction
+                // does the tile exist
+                foreach (tile t in tileList)
+                {
+                    if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
+                    {
+                        if (!directionBlocked)
+                        {
+                            if (t.GetActive() && !t.GetOccupied())
+                            {
+                                t.SetHighlight(true);
+                            }
+                            else
+                            {
+                                t.SetHighlight(false);
+                                directionBlocked = true;
+
+                                // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
+                                //range = r; // bad practice, setting an int within the function that's returning a type
+                                //targetTile.highlightColor = 2;
+                                //return targetTile;
+
+                            }
+                        }
+                        else
+                        {
+                            t.SetHighlight(false);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     tile LinearHighlighter(tile sourceTile, int direction, int range)
     {
+        // The 5 is linked to the board size
         Mathf.Clamp((float)direction, 0, 5);
 
 
         // there should be a way to know from the cubic coordinates whether the tile is on a line
+        // Refresh the highlighted tiles for all in range
+        AllAllowedMovesHighlighter(activeTile);
 
         // first, unhighlight all tiles
         foreach (tile t in tileList)
@@ -1100,6 +1163,7 @@ public class MilkBlossom : MonoBehaviour
         {
 
         }
+
         sourceTile.highlightColor = 0;
         tile targetTile = sourceTile;
         for (int r = 1; r <= range; r++)
@@ -1131,6 +1195,7 @@ public class MilkBlossom : MonoBehaviour
         }
         // final target tile is highlighted with final highlight color
         targetTile.highlightColor = 2;
+
         return targetTile;
     }
 
