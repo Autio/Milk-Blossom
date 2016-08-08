@@ -597,7 +597,7 @@ public class MilkBlossom : MonoBehaviour
     void Awake()
     {
 
-        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite1");
+        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2");
     }
 
     // Use this for initialization
@@ -740,8 +740,6 @@ public class MilkBlossom : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-
 
         // Debug.Log("active player " + activePlayer);
         // Debug.Log("current state " + currentState);
@@ -1272,10 +1270,7 @@ public class MilkBlossom : MonoBehaviour
             }
         }
 
-
         // at the end we should update all the tiles on the board with values and select the highest out of those (as long as it's a legit move)
-
-
     }
 
     tile PseudoAIMove(player p)
@@ -1303,7 +1298,6 @@ public class MilkBlossom : MonoBehaviour
         // awareness of the active player
         // weightings of the different points
         // output could be a value assigned to each tile
-        //
 
         // first move valuation on the basis of the points on that tile
         // for every direction
@@ -1412,10 +1406,7 @@ public class MilkBlossom : MonoBehaviour
                 }
             }
 
-            // For 
-
-
-
+            // For
         }
 
         // Think of blocking opponents immediate best move
