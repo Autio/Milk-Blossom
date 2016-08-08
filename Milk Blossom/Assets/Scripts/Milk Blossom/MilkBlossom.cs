@@ -328,6 +328,8 @@ public class MilkBlossom : MonoBehaviour
             // select starting player
             activeTile = SelectPlayer(0);
 
+            
+
         }
 
         public void AllocatePoints()
@@ -417,6 +419,8 @@ public class MilkBlossom : MonoBehaviour
                         player pl = new player();
                         playerList.Add(pl);
                         pl.playerNumber = p;
+
+
                         pl.playerTile = chosenTile;
                         pl.playerGameObject = newPlayer;
                         pl.playerWheelTransform = newPlayer.transform.FindChild("PlayerWheels");
@@ -425,6 +429,14 @@ public class MilkBlossom : MonoBehaviour
                         {
                             pl.SetAI(true);
                             Debug.Log("Player " + p.ToString() + " set to AI");
+                        }
+
+                        if (p == 1)
+                        {
+                            if (!pl.GetAI())
+                            {
+                                pl.playerGameObject.GetComponent<TouchDrag>().enabled = true;
+                            }
                         }
 
                         break;
@@ -626,7 +638,27 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-
+    public void SetPlayerDraggability()
+    {
+        foreach (player p in playerList)
+        {
+            if (p.playerNumber != (activePlayer + 1))
+            {
+                p.playerGameObject.GetComponent<TouchDrag>().enabled = false;
+            }
+            else
+            {
+                if (p.GetAI())
+                {
+                    p.playerGameObject.GetComponent<TouchDrag>().enabled = false;
+                }
+                else
+                {
+                    p.playerGameObject.GetComponent<TouchDrag>().enabled = true;
+                }
+            }
+        }
+    }
 
 
     void IncrementActivePlayer()
@@ -637,6 +669,9 @@ public class MilkBlossom : MonoBehaviour
             activePlayer = 0;
         }
         activeTile = SelectPlayer(activePlayer);
+
+        // Only the current player can be dragged and dropped, if it's not an AI
+        SetPlayerDraggability();
 
         if (!ValidMoves(playerList[activePlayer]))
         {
@@ -724,6 +759,8 @@ public class MilkBlossom : MonoBehaviour
                 scoreObjects[i].transform.GetComponent<Text>().text = "0\n" + "P" + (i + 1).ToString();
             }
         }
+
+
     }
 
     IEnumerator switchState(states s, float delay)
@@ -779,7 +816,6 @@ public class MilkBlossom : MonoBehaviour
                         ClearHighlights();
 
                     }
-
 
                 }
             }
