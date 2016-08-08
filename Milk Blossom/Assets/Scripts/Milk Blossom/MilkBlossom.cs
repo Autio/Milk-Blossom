@@ -8,6 +8,8 @@ using System.Collections.Generic;
 public class MilkBlossom : MonoBehaviour
 {
     // TODO 
+    // Mouse & Touch controls 
+    // An android deployment
 
     // Making a Hey That's My Fish variant with a custom controller
     // Basic gameplay: Hex grid
@@ -58,6 +60,9 @@ public class MilkBlossom : MonoBehaviour
     // game ends when a player has no further valid moves                                   x
     // player who can't move does a shaky-shake and perishes
     // music tied to the tiles the players are on
+
+    public enum controlOptions { keyboard, mouse, touch};
+    public controlOptions controlOption = controlOptions.mouse;
 
     public static Color[] highlightColorList = new Color[3]; // 0 for source, 1 for midway and 2 for target
     public Color[] highlightColorsListPublic;
@@ -781,6 +786,7 @@ public class MilkBlossom : MonoBehaviour
 
 
             // CONTROLS
+
             // debug visualisations 
             if (Input.GetKey(KeyCode.F1))
             {
@@ -882,6 +888,12 @@ public class MilkBlossom : MonoBehaviour
                 bigWheelAction();
             }
 
+            if (controlOption == controlOptions.mouse)
+            {
+
+
+
+            }
 
 
 
@@ -891,8 +903,7 @@ public class MilkBlossom : MonoBehaviour
 
 
 
-
-            tile targetTile = null;
+                tile targetTile = null;
             if (Input.GetKey(KeyCode.T))
             {
                 PseudoAIMove(playerList[activePlayer]);
