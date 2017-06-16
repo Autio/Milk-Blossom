@@ -69,6 +69,7 @@ public class MilkBlossom : MonoBehaviour
     public GameObject[] pointsObjects;
     public GameObject bigWheel;
     public GameObject hexTile;
+
     // Tile things
     static Sprite[] tileSprites;
     hexGrid liveHexGrid;
@@ -100,7 +101,7 @@ public class MilkBlossom : MonoBehaviour
     private int currentDir;
 
 
-    // player info
+    // player info, would be better in a class probably
     public GameObject playerObject;
     [Range(1, 4)]
     public int players = 3;
@@ -245,9 +246,9 @@ public class MilkBlossom : MonoBehaviour
         yield return new WaitForSeconds(delay);
     }
 
-
     public class hexGrid
     {
+        // what needs to be public here?
         public int x = 5;
         public int y = 5;
         public float radius = 0.5f;
@@ -330,6 +331,7 @@ public class MilkBlossom : MonoBehaviour
 
         }
 
+        // Place the points onto the tiles 
         public void AllocatePoints()
         {
 
