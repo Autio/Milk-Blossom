@@ -11,21 +11,15 @@ public class MilkBlossom : MonoBehaviour
     // Mouse & Touch controls 
     // An android deployment
 
-    // Making a Hey That's My Fish variant with a custom controller
+    // Making a Hey That's My Fish variant
     // Basic gameplay: Hex grid
     // Each hex has 1 to 3 points
-    // Player has one unit to control
+    // Player has one unit to control (could have more)
     // When they LEAVE a tile, they pick up the points
     // The tile that is left gets removed from play
     // On their turn they can move in a straight unobstructed line as long a distance as they like
     // Players cannot move over empty tiles or tiles with other player units
     // The player who has most points once not more moves can be made wins 
-
-    // Adapting this to the rotator controller:
-    // mid wheel could control orientation
-    // inner wheel could control distance like a wind-up spring
-    // outer wheel could control... a monster at the edges, or a tilting of the tile map that pulls either
-    // the AIs or the points from tile to tile
 
     // In order to make this game I need to implement:
     // A hex grid                                                           x
@@ -42,17 +36,7 @@ public class MilkBlossom : MonoBehaviour
     // tiles with three points available, in which case prioritise those for the move
     // if no three point tiles are available, do the same for two point tiles, 
     // else do it for one point tiles
-
-    // still to do:
-    // visual display of points on tiles, maybe as hebrew words
-    // visual display of units, need wheels and ideally an insect-bot like visual
-    // hex model
-    // end condition                                                                        x
-    // basic AI                                                                             x
-    // restart button                                                                       x
-    // third wheel functionality
-    // force feedback placeholders
-    // falling hair                                                                         x                                                                      
+                                                            
 
     // further ideas
     // just let players do as many turns as feasible, don't worry about isolated areas (though
@@ -60,38 +44,11 @@ public class MilkBlossom : MonoBehaviour
     // game ends when a player has no further valid moves                                   x
     // player who can't move does a shaky-shake and perishes
     // music tied to the tiles the players are on
+    // What about an overall level handler? How do you do progression and keep the player interested for multiple games? 
+    // What about difficulty handling?
 
-    public enum controlOptions { keyboard, mouse, touch};
-    public controlOptions controlOption = controlOptions.mouse;
-
-    public static Color[] highlightColorList = new Color[3]; // 0 for source, 1 for midway and 2 for target
-    public Color[] highlightColorsListPublic;
-    public GameObject[] pointsObjects;
-    public GameObject bigWheel;
-    public GameObject hexTile;
-
-    // Tile things
-    static Sprite[] tileSprites;
-    hexGrid liveHexGrid;
-    public int hexGridx = 5;
-    public int hexGridy = 5;
-    public float hexRadius = 0.5f;
-    public int hexGridRadius = 3;
-    public bool useAsInnerCircleRadius = true;
-    static List<tile> tileList = new List<tile>();
-    static tile activeTile;
-    private int targetRange = 2;
-    private float turnCooldown = 0.5f;
-    public GameObject[] scoreObjects;
-    private GameObject timerBar;
-    private float moveCoolDown = 2.0f;
-    public bool timed = false; // do human players have limited time to do turns or not
-    public float turnTimeLimit = 10f;
-    private float turnTimeCounter = 0;
-    [Range(0, 5)]
-    private int bigWheelDir;
-
-    public GameObject endText;
+    
+    // MAIN GAME LOGIC
     Camera mainCam;
     private enum states { starting, planning, live, moving, ending, paused };
     states currentState = states.starting;
@@ -99,9 +56,32 @@ public class MilkBlossom : MonoBehaviour
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
+    public enum controlOptions { keyboard, mouse, touch };
+    public controlOptions controlOption = controlOptions.mouse;
+
+    public GameObject[] pointsObjects;
+    public GameObject hexTile;
+    public GameObject[] scoreObjects;
+    private GameObject timerBar;
+    public bool timed = false; // do human players have limited time to do turns or not
 
 
-    // player info, would be better in a class probably
+    // Tile map attributes
+    hexGrid liveHexGrid;
+    public int hexGridx = 5;
+    public int hexGridy = 5;
+    public float hexRadius = 0.5f;
+    public int hexGridRadius = 3;
+    private int targetRange = 2;
+    private float turnCooldown = 0.5f;
+    private float moveCoolDown = 2.0f;
+    public float turnTimeLimit = 10f;
+    private float turnTimeCounter = 0;
+    public bool useAsInnerCircleRadius = true;
+    static List<tile> tileList = new List<tile>(); // master list of tiles
+    static tile activeTile; // does it make sense to keep the active tile as a variable like this?
+
+    // player info, would be better in a class probably. Limiting players to 4
     public GameObject playerObject;
     [Range(1, 4)]
     public int players = 3;
@@ -109,6 +89,38 @@ public class MilkBlossom : MonoBehaviour
     static List<player> playerList = new List<player>();
     public int activePlayer = 0;
 
+    // ART & VISUAL
+    static Sprite[] tileSprites;
+    public static Color[] highlightColorList = new Color[3]; // 0 for source, 1 for midway and 2 for target
+    public Color[] highlightColorsListPublic;
+    public GameObject endText;
+
+    // Use this for initialization
+    void Start()
+    {
+
+        for (int c = 0; c < 3; c++)
+        {
+            highlightColorList[c] = highlightColorsListPublic[c];
+        }
+
+        mainCam = GameObject.Find("Main Camera").GetComponent<Camera>();
+        
+        // Only if we need timed turns
+        timerBar = GameObject.Find("TimerBar");
+
+        // Direction mapping
+        directions[0] = new Vector3(+1, -1, 0);
+        directions[1] = new Vector3(+1, 0, -1);
+        directions[2] = new Vector3(0, +1, -1);
+        directions[3] = new Vector3(-1, +1, 0);
+        directions[4] = new Vector3(-1, 0, +1);
+        directions[5] = new Vector3(0, -1, +1);
+
+        InitGame();
+
+    }
+    // CLASSES
     public class player
     {
         [Range(1, 4)]
@@ -275,7 +287,7 @@ public class MilkBlossom : MonoBehaviour
             offsetX = unitLength * Mathf.Sqrt(3);
             offsetY = unitLength * 1.5f;
 
-            // create in a shape of a hexagon
+            // create the tilemap in the shape of a hexagon
 
             for (int q = -gridRadius; q <= gridRadius; q++)
             {
@@ -283,12 +295,13 @@ public class MilkBlossom : MonoBehaviour
                 int r2 = Mathf.Min(gridRadius, -q + gridRadius);
                 for (int r = r1; r <= r2; r++)
                 {
-                    // create tile class
+                    // instantiate tile
                     tile newTile = new tile();
                     newTile.index = tileCount;
                     tileList.Add(newTile);
                     tileCount++;
 
+                    // Place the tile
                     newTile.cubePosition = new Vector3(q, r, -q - r);
                     Vector2 offset = CubeToOddR(newTile.cubePosition);
                     Vector2 hexPos = HexOffset((int)offset.x, (int)offset.y);
@@ -322,22 +335,25 @@ public class MilkBlossom : MonoBehaviour
             }
 
             // do remaining setup things within ienumerator to ensure sequence is correct
+            // 2: Is this the correct place? 
             AllocatePoints();
             yield return new WaitForSeconds(1.4f);
             AllocatePlayers(playerObj);
 
-            // select starting player
+            // Set starting player 
+            // 2: This shouldn't always be the human player, should it?
             activeTile = SelectPlayer(0);
 
         }
 
-        // Place the points onto the tiles 
+        // Place the points onto the tiles at the start of a level 
         public void AllocatePoints()
         {
 
             int[] pool = new int[3];
             for (int i = 0; i < pool.Length; i++)
             // if there are 60 tiles, 10 are triples, 20 are doubles and 30 are singles, i.e. 1/6, 1/3 and 1/2
+            // 2: Does this place a constraint on the tile count? Are odd numbers allowed, for example?
             {
                 pool[i] = Mathf.FloorToInt(tileCount / (2 + i * i));
             }
@@ -450,6 +466,7 @@ public class MilkBlossom : MonoBehaviour
         public void CreateGrid(GameObject hexTile)
         {
             tileCount = x * y;
+            // Would there need to be a variety of methods here depending on the hex grid type?
 
             // create tiles themselves
             for (int i = 0; i < x; i++)
@@ -482,6 +499,7 @@ public class MilkBlossom : MonoBehaviour
             }
         }
 
+        // Tidy up activity when leaving the tile
         public void leaveTile(tile tileToLeave)
         {
             tileToLeave.SetOccupied(false);
@@ -496,19 +514,7 @@ public class MilkBlossom : MonoBehaviour
             tileToEnter.SetOccupied(true);
         }
 
-        void AddDebugText(GameObject targetObject, string inputText)
-        {
-            try
-            {
-                //string existingText = targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText;
-                targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
-            }
-            catch
-            {
-                Debug.Log("Failed to add text");
-            }
 
-        }
 
         Vector2 HexOffset(int x, int y)
         {
@@ -527,7 +533,7 @@ public class MilkBlossom : MonoBehaviour
             return position;
         }
 
-        // hex tile position conversion helper functions
+        // hex tile position conversion helper functions http://www-cs-students.stanford.edu/~amitp/
         // odd r to cube
         Vector3 OddRToCube(int x, int y)
         {
@@ -550,7 +556,6 @@ public class MilkBlossom : MonoBehaviour
         }
 
         // even r to cube
-
         Vector3 EvenRToCube(int x, int y)
         {
             Vector3 cubeCoordinates = new Vector3();
@@ -561,6 +566,21 @@ public class MilkBlossom : MonoBehaviour
             return cubeCoordinates;
         }
 
+
+        // DEBUG METHODS
+        void AddDebugText(GameObject targetObject, string inputText)
+        {
+            try
+            {
+                //string existingText = targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText;
+                targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
+            }
+            catch
+            {
+                Debug.Log("Failed to add text");
+            }
+
+        }
         public void DisplayIndices()
         {
             // simply number tiles
@@ -612,29 +632,7 @@ public class MilkBlossom : MonoBehaviour
         tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2");
     }
 
-    // Use this for initialization
-    void Start()
-    {
-        for (int c = 0; c < 3; c++)
-        {
-            highlightColorList[c] = highlightColorsListPublic[c];
-        }
-
-        mainCam = GameObject.Find("Main Camera").GetComponent<Camera>();
-
-        timerBar = GameObject.Find("TimerBar");
-
-        InitGame();
-
-        directions[0] = new Vector3(+1, -1, 0);
-        directions[1] = new Vector3(+1, 0, -1);
-        directions[2] = new Vector3(0, +1, -1);
-        directions[3] = new Vector3(-1, +1, 0);
-        directions[4] = new Vector3(-1, 0, +1);
-        directions[5] = new Vector3(0, -1, +1);
-
-
-    }
+   
 
     public void SetPlayerDraggability()
     {
@@ -910,31 +908,6 @@ public class MilkBlossom : MonoBehaviour
                 currentDir = 1;
             }
 
-            if (Input.GetKey(KeyCode.O))
-            {
-                if (bigWheelDir == 5)
-                {
-                    bigWheelDir = 0;
-                }
-                else
-                {
-                    bigWheelDir++;
-                }
-                bigWheelAction();
-            }
-
-            if (Input.GetKey(KeyCode.P))
-            {
-                if (bigWheelDir == 0)
-                {
-                    bigWheelDir = 5;
-                }
-                else
-                {
-                    bigWheelDir--;
-                }
-                bigWheelAction();
-            }
 
             if (controlOption == controlOptions.mouse)
             {
@@ -949,20 +922,6 @@ public class MilkBlossom : MonoBehaviour
             {
                 PseudoAIMove(playerList[activePlayer]);
             }
-
-
-            // orient big wheel with mouse
-            /*Vector2 mousePos;
-            Vector3 screenPos;
-            mousePos = Input.mousePosition;
-
-            screenPos = mainCam.ScreenToWorldPoint(Input.mousePosition);//new Vector3(mousePos.x, mousePos.y, bigWheel.transform.position.z - mainCam.transform.position.z));
-                                                                        //Rotates toward the mouse
-                                                                        // bigWheel.transform.eulerAngles = new Vector3(0, 0, Mathf.Atan2((mousePos.y - bigWheel.transform.position.y), (mousePos.x - bigWheel.transform.position.x)) * Mathf.Rad2Deg - 90);
-            bigWheel.transform.rotation = Quaternion.LookRotation(Vector3.forward, mousePos);
-            */
-            // WHEEL CONTROLS
-            // ROTATING PLAYER
 
             turnCooldown -= Time.deltaTime;
             if (turnCooldown < 0)
@@ -1014,19 +973,6 @@ public class MilkBlossom : MonoBehaviour
 
             endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
         }
-    }
-
-    void bigWheelAction()
-    {
-        bigWheel.transform.eulerAngles = new Vector3(0, 0,  60 * bigWheelDir);
-        //switch (bigWheelDir)
-        //{
-        //    case 0:
-               
-
-                
-        //}
-
     }
 
     // if switching to player, check if any valid moves are available
@@ -1279,11 +1225,6 @@ public class MilkBlossom : MonoBehaviour
         // Only once object has moved, do we increment to the next player
         yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();
-
-    }
-
-    void TiltBoard(int direction)
-    {
 
     }
 
