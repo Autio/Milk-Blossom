@@ -393,5 +393,17 @@ public class hexGrid  {
             }
     }
     
+    public int GetTileIndexByPos(Vector2 pos, List<tile> tileList)
+    {
+        foreach (tile t in tileList)
+        {
+            if (t.offsetPosition == pos)
+            {
+                return t.index;
+            }
+        }
+
+        return -1;
+    }
 
 }

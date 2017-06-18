@@ -55,8 +55,8 @@ public class MilkBlossom : MonoBehaviour
 
     // MAIN GAME LOGIC
     Camera mainCam;
-    private enum states { starting, planning, live, moving, ending, paused };
-    states currentState = states.starting;
+    public enum states { starting, planning, live, moving, ending, paused };
+    public states currentState = states.starting;
     bool firstTurn = true;
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
@@ -72,7 +72,7 @@ public class MilkBlossom : MonoBehaviour
 
 
     // Tile map attributes
-    hexGrid liveHexGrid;
+    public hexGrid liveHexGrid;
     public int hexGridx = 5;
     public int hexGridy = 5;
     public float hexRadius = 0.5f;
@@ -83,7 +83,7 @@ public class MilkBlossom : MonoBehaviour
     public float turnTimeLimit = 10f;
     private float turnTimeCounter = 0;
     public bool useAsInnerCircleRadius = true;
-    static List<tile> tileList = new List<tile>(); // master list of tiles
+    public static List<tile> tileList = new List<tile>(); // master list of tiles
     static tile activeTile; // does it make sense to keep the active tile as a variable like this?
 
     // player info, would be better in a class probably. Limiting players to 4

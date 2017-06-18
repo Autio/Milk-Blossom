@@ -10,23 +10,30 @@ public class MouseDrag : MonoBehaviour {
     float speed = 15f;
     Transform targetTile;
     Vector3 zOffset = new Vector3(0, 0, -0.5f);
-    enum dragStates {returning, movingToTarget, idle};
+    enum dragStates {inactive, returning, movingToTarget, idle};
     dragStates currentState;
+    MilkBlossom GameController;
+
     void Start()
     {
         currentState = dragStates.idle;
+        GameController = GameObject.Find("GameController").GetComponent<MilkBlossom>();
     }
     // Dragging player sprites
 
     void OnMouseDrag()
     {
-
-        // only allow dragging for the active player. 
-        if (this.enabled)
+        // Can only happen if the game is in Live mode
+        if (GameObject.Find("GameController").GetComponent<MilkBlossom>().currentState == MilkBlossom.states.live)
         {
-            Vector3 pos;
-            pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y, transform.position.z);
-            transform.position = pos;
+
+            // only allow dragging for the active player. 
+            if (this.enabled)
+            {
+                Vector3 pos;
+                pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y, transform.position.z);
+                transform.position = pos;
+            }
         }
     }
 
@@ -40,12 +47,16 @@ public class MouseDrag : MonoBehaviour {
         journeyLength = Vector3.Distance(transform.position, transform.parent.position);
         //        transform.position = transform.parent.position;
         currentState = dragStates.returning;
-        CheckCollisions();
+        if (CheckMove())
+        {
+            currentState = dragStates.movingToTarget;
+        } else
+        {
+            currentState = dragStates.returning;
+        }
 
 
     }
-
-
 
     void Update()
     {
@@ -77,20 +88,25 @@ public class MouseDrag : MonoBehaviour {
 
     }
 
-    void CheckCollisions()
+    bool CheckMove()
     {
         Collider2D[] arr;
-        arr = Physics2D.OverlapCircleAll(transform.position, 0.1f);
+        // set float such that the player has a bit of leeway and prefer cancelling the move rather than doing it to an unintended hex
+        arr = Physics2D.OverlapCircleAll(transform.position, 0.03f);
         foreach(Collider2D a in arr)
         {
             if(a.transform.tag == "Hex")
             {
                 targetTile = a.transform;
 
+                // Check with the hex board whether the move is legitimate or not
+                int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), MilkBlossom.tileList);
+                Debug.Log("Move to tile " + i.ToString());
                 // let's assume the move is legitimate
-                currentState = dragStates.movingToTarget;
+                return true;
             }
         }
+            return false;
     }
 
 }
