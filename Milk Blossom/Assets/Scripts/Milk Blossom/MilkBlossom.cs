@@ -120,143 +120,6 @@ public class MilkBlossom : MonoBehaviour
         InitGame();
 
     }
-    // CLASSES
-    public class player
-    {
-        [Range(1, 4)]
-        public int playerNumber;
-        bool AI = false;
-        bool alive = true;
-        Vector3 cubePosition;
-        Vector2 offsetPosition;
-        public tile playerTile;
-        public GameObject playerGameObject;
-        public Transform playerWheelTransform;
-        private int points;
-        public void AddPoints(int p)
-        {
-            points += p;
-        }
-        public int GetPoints()
-        {
-            return points;
-        }
-
-        public void SetAlive(bool t)
-        {
-            alive = t;
-        }
-        public bool GetAlive()
-        {
-            return alive;
-        }
-
-        public void DeathThroes()
-        {
-            // make some deathanimation happen
-            try
-            {
-                playerGameObject.transform.localScale *= 2.0f;
-            }
-
-            catch
-            {
-
-            }
-        }
-
-        public bool GetAI()
-        {
-            return AI;
-        }
-
-        public void SetAI(bool AIFlag)
-        {
-            AI = AIFlag;
-        }
-    }
-
-    public class tile
-    {
-        public Vector3 cubePosition;
-        public Vector2 offsetPosition;
-        [Range(1, 3)]
-        public int points;
-        public int index;
-        bool active = true;
-        public bool occupied = false;
-        bool highlighted = false;
-        public int highlightColor;
-        public GameObject tileObject;
-        public int[] moveValues = new int[4];
-        public GameObject tilePointsObject;
-        void drawPoints()
-        {
-            //
-        }
-
-        public void SetHighlight(bool isOn)
-        {
-            highlighted = isOn;
-            if (highlighted)
-            {
-                tileObject.GetComponent<Renderer>().material.color = highlightColorList[highlightColor];
-            }
-            else
-            {
-                try
-                {
-                    tileObject.GetComponent<Renderer>().material.color = Color.white;
-                }
-                catch
-                {
-                    Debug.Log("Couldn't clear highlight");
-                }
-            }
-        }
-        public bool GetHighlight()
-        {
-            return highlighted;
-        }
-
-        public void SetOccupied(bool occupyFlag)
-        {
-            occupied = occupyFlag;
-        }
-        public bool GetOccupied()
-        {
-            return occupied;
-        }
-
-        public void SetActive(bool activeFlag)
-        {
-            active = activeFlag;
-
-            if (!active)
-            {
-                //tileObject.GetComponent<HexBehaviour>().DropTile(12f);
-                tilePointsObject.SetActive(false);
-
-            }
-
-
-        }
-
-        public bool GetActive()
-        {
-            return active;
-        }
-
-        private IEnumerator DisableRenderer(GameObject o, float delay)
-        {
-            yield return new WaitForSeconds(delay);
-            o.GetComponent<Renderer>().enabled = false;
-        }
-    }
-    static IEnumerator basicDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-    }
 
     public class hexGrid
     {
@@ -1017,11 +880,11 @@ public class MilkBlossom : MonoBehaviour
     {
         foreach (tile t in tileList)
         {
-            t.SetHighlight(false);
+            t.SetHighlight(false, highlightColorList[0]);
         }
         try
         {
-            playerList[activePlayer].playerTile.SetHighlight(true);
+            playerList[activePlayer].playerTile.SetHighlight(true, highlightColorList[0]);
         }
         catch
         {
@@ -1035,11 +898,11 @@ public class MilkBlossom : MonoBehaviour
         // Unhighlight all tiles
         foreach (tile t in tileList)
         {
-             t.SetHighlight(false);
+             t.SetHighlight(false, highlightColorList[0]);
         }
         try
         {
-            sourceTile.SetHighlight(true);
+            sourceTile.SetHighlight(true, highlightColorList[0]);
         }
         catch
         {
@@ -1063,11 +926,11 @@ public class MilkBlossom : MonoBehaviour
                         {
                             if (t.GetActive() && !t.GetOccupied())
                             {
-                                t.SetHighlight(true);
+                                t.SetHighlight(true, highlightColorList[0]);
                             }
                             else
                             {
-                                t.SetHighlight(false);
+                                t.SetHighlight(false, highlightColorList[0]);
                                 directionBlocked = true;
 
                                 // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
@@ -1079,7 +942,7 @@ public class MilkBlossom : MonoBehaviour
                         }
                         else
                         {
-                            t.SetHighlight(false);
+                            t.SetHighlight(false, highlightColorList[0]);
                         }
                     }
                 }
@@ -1100,12 +963,12 @@ public class MilkBlossom : MonoBehaviour
         // first, unhighlight all tiles
         foreach (tile t in tileList)
         {
-            t.SetHighlight(false);
+            t.SetHighlight(false, highlightColorList[0]);
         }
 
         try
         {
-            sourceTile.SetHighlight(true);
+            sourceTile.SetHighlight(true, highlightColorList[0]);
         }
         catch
         {
@@ -1125,7 +988,7 @@ public class MilkBlossom : MonoBehaviour
                 {
                     if (t.GetActive() && !t.GetOccupied())
                     {
-                        t.SetHighlight(true);
+                        t.SetHighlight(true, highlightColorList[0]);
                         targetTile = t;
                         targetTile.highlightColor = 1;
                     }
