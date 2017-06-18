@@ -47,7 +47,12 @@ public class MilkBlossom : MonoBehaviour
     // What about an overall level handler? How do you do progression and keep the player interested for multiple games? 
     // What about difficulty handling?
 
-    
+    // Mouse control logic...
+    // You should only be able to pick a legitimate piece to move around, i.e. your unit(s)
+    // It should then identify which collider of a hex it's interacting with AT the point of the mouse drag being let go
+    // It should then either glide back to the start position because it's an invalid move
+    // Or make the move happen if it's a legitimate one
+
     // MAIN GAME LOGIC
     Camera mainCam;
     private enum states { starting, planning, live, moving, ending, paused };
@@ -1022,7 +1027,6 @@ public class MilkBlossom : MonoBehaviour
 
     public static class AI_Brain
     {
-
 
         /*
         List<tile> potentialTiles = new List<tile>();

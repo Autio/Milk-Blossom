@@ -11,7 +11,6 @@ public class HexBehaviour : MonoBehaviour {
 	void Start () {
 	    iTween.MoveBy(this.gameObject, iTween.Hash("z", 0.15, "easeType", "easeInOutCubic", "loopType", "pingPong", "delay", .02));
 
-        
     }
 	
 	// Update is called once per frame
@@ -55,5 +54,7 @@ public class HexBehaviour : MonoBehaviour {
             dropCounter = duration;
         }
     }
+
+
     
 }
