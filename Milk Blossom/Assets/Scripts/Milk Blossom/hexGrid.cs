@@ -130,7 +130,7 @@ public class hexGrid  {
                                 // this tile gets 1 point
                                 chosenTile.points = k + 1;
                                 // Instantiate points object
-                                float zOffset = 2f;
+                                float zOffset = 1f;
                                 GameObject pointsObject = (GameObject)UnityEngine.MonoBehaviour.Instantiate(pointsObjects[k], new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, zOffset), Quaternion.identity);
                                 chosenTile.tilePointsObject = pointsObject;
                                 // AddDebugText(chosenTile.tileObject, chosenTile.points.ToString());

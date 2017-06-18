@@ -141,19 +141,22 @@ public class MilkBlossom : MonoBehaviour
             if (p.playerNumber != (activePlayer + 1))
             {
                 p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
             }
             else
             {
                 if (p.GetAI())
                 {
                     p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
                 }
                 else
                 {
                     p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = true;
                 }
             }
-        }
+                    }
     }
 
 
@@ -282,6 +285,8 @@ public class MilkBlossom : MonoBehaviour
         {
             // Set active tile based on player
             activeTile = SelectPlayer(0);
+            SetPlayerDraggability();
+
         }
 
         Debug.Log("Switced to " + s);
