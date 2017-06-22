@@ -74,6 +74,8 @@ public class MouseDrag : MonoBehaviour {
         }
         if (currentState == dragStates.movingToTarget)
         {
+            //transform.parent.position = targetTile.position + zOffset;
+            transform.parent.position = targetTile.position + zOffset;
             Debug.Log("Moving to target");
             float distCovered = (Time.time - startTime) * speed;
             float fracJourney = distCovered / journeyLength;
@@ -82,6 +84,9 @@ public class MouseDrag : MonoBehaviour {
             if (transform.position == (targetTile.position + zOffset))
             {
                 currentState = dragStates.idle;
+
+                // Move the main object, not just the sprite
+                //transform.parent.position = transform.localPosition;
             }
         }
 
@@ -95,13 +100,24 @@ public class MouseDrag : MonoBehaviour {
         arr = Physics2D.OverlapCircleAll(transform.position, 0.03f);
         foreach(Collider2D a in arr)
         {
-            if(a.transform.tag == "Hex")
+            if (a.transform.tag == "Hex")
             {
                 targetTile = a.transform;
 
                 // Check with the hex board whether the move is legitimate or not
+                // Get tileindex by looking up position
                 int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), MilkBlossom.tileList);
                 Debug.Log("Move to tile " + i.ToString());
+                MoveablePiece arg = new MoveablePiece();
+                // Try action on the basis of the inded
+                if (GameController.MouseMakeMove(arg, i))
+                {
+                    return true;
+                } else
+                {
+                    return false;
+                }
+
                 // let's assume the move is legitimate
                 return true;
             }

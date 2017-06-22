@@ -19,7 +19,7 @@ public class HexBehaviour : MonoBehaviour {
             myTime += Time.deltaTime;
             if(myTime > 0.3f)
         {
-            transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = "";
+            transform.Find("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = "";
         }
         if (!paused)
         {

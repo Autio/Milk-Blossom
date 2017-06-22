@@ -140,20 +140,20 @@ public class MilkBlossom : MonoBehaviour
         {
             if (p.playerNumber != (activePlayer + 1))
             {
-                p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
-                p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
             }
             else
             {
                 if (p.GetAI())
                 {
-                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
-                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
                 }
                 else
                 {
-                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
-                    p.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<MouseDrag>().enabled = true;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = true;
                 }
             }
                     }
@@ -714,6 +714,41 @@ public class MilkBlossom : MonoBehaviour
 
 
 
+
+    }
+
+    public bool MouseMakeMove(MoveablePiece m, int targetTileIndex)
+    {
+        // Tiles should always be referred to byt their index
+        // This should return a boolean?
+        
+        // Feels like there should be a ValidMove parameter on the board tiles
+        if(tileList[targetRange].GetHighlight() == false)
+        {
+            return false;
+        } 
+        else
+        {
+            return true;
+        }
+
+        // acquire points
+        //p.AddPoints(p.playerTile.points);
+
+        // leave current tile (by index)
+        //liveHexGrid.leaveTile(p.playerTile);
+
+        // arrive on new tile (by index)
+
+        // set player tile as the target tile
+        //p.playerTile = targetTile;
+        //activeTile = targetTile;
+        //liveHexGrid.enterTile(activeTile);
+
+        // update scores
+        UpdateScores();
+
+        return false;
 
     }
 

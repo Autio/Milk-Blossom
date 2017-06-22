@@ -78,7 +78,7 @@ public class hexGrid  {
 
                 }
                 tileList[t].tileObject.transform.parent = GameObject.Find("HexGrid").transform;
-                tileList[t].tileObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
+                tileList[t].tileObject.transform.Find("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
                 yield return new WaitForSeconds(standardDelay);
             }
 
@@ -178,14 +178,14 @@ public class hexGrid  {
                         //yield return new WaitForSeconds(standardDelay);
                         GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, -0.5f), Quaternion.identity);
                         // set player text
-                        newPlayer.transform.FindChild("PlayerSprite").transform.FindChild("PlayerLabel").GetComponent<TextMesh>().text = "P" + p.ToString();
+                        newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + p.ToString();
                         chosenTile.SetOccupied(true);
                         player pl = new player();
                         playerList.Add(pl);
                         pl.playerNumber = p;
                         pl.playerTile = chosenTile;
                         pl.playerGameObject = newPlayer;
-                        pl.playerWheelTransform = newPlayer.transform.FindChild("PlayerWheels");
+                        pl.playerWheelTransform = newPlayer.transform.Find("PlayerWheels");
 
                         if (playerCount - p < AIPlayerCount)
                         {
@@ -197,7 +197,7 @@ public class hexGrid  {
                         {
                             if (!pl.GetAI())
                             {
-                                pl.playerGameObject.transform.FindChild("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                                pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
                             }
                         }
 
@@ -321,7 +321,7 @@ public class hexGrid  {
             try
             {
                 //string existingText = targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText;
-                targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
+                targetObject.transform.Find("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
             }
             catch
             {
