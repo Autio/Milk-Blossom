@@ -53,13 +53,14 @@ public class MilkBlossom : MonoBehaviour
     // It should then either glide back to the start position because it's an invalid move
     // Or make the move happen if it's a legitimate one
 
-    // MAIN GAME LOGIC
+    // MAIN GAME LOGIC - MILK BLOSSOM
     Camera mainCam;
     bool firstTurn = true;
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
     
+    // Objects specific to Milk Blossom
     public GameObject[] pointsObjects;
     public GameObject hexTile;
     public GameObject[] scoreObjects;
@@ -78,7 +79,6 @@ public class MilkBlossom : MonoBehaviour
     public float turnTimeLimit = 10f;
     private float turnTimeCounter = 0;
     public bool useAsInnerCircleRadius = true;
-    public static List<tile> tileList = new List<tile>(); // master list of tiles
     static tile activeTile; // does it make sense to keep the active tile as a variable like this?
 
     // player info, would be better in a class probably. Limiting players to 4
@@ -246,7 +246,7 @@ public class MilkBlossom : MonoBehaviour
         liveHexGrid.playerObj = playerObject;
         liveHexGrid.pointsObjects = pointsObjects;
 
-        StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, tileList, tileSprites, playerList));
+        StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
 
 
         // once game is setup, set it to live
@@ -485,7 +485,7 @@ public class MilkBlossom : MonoBehaviour
     {
         for (int d = 0; d < directions.Length; d++)
         {
-            foreach (tile t in tileList)
+            foreach (tile t in GameManager.tileList)
             {
                 // is there a tile that sits one step in this direction anywhere on the board that
                 // is both active and unoccupied
@@ -520,7 +520,7 @@ public class MilkBlossom : MonoBehaviour
 
     public void ClearHighlights()
     {
-        foreach (tile t in tileList)
+        foreach (tile t in GameManager.tileList)
         {
             t.SetHighlight(false, highlightColorList[0]);
         }
@@ -538,7 +538,7 @@ public class MilkBlossom : MonoBehaviour
     void AllAllowedMovesHighlighter(tile sourceTile)
     {
         // Unhighlight all tiles
-        foreach (tile t in tileList)
+        foreach (tile t in GameManager.tileList)
         {
              t.SetHighlight(false, highlightColorList[0]);
         }
@@ -562,7 +562,7 @@ public class MilkBlossom : MonoBehaviour
                     Vector3 relativeTargetPosition = directions[d] * r;
                     // try and step to the next tile in the direction
                     // does the tile exist
-                    foreach (tile t in tileList)
+                    foreach (tile t in GameManager.tileList)
                     {
                         if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
                         {
@@ -609,7 +609,7 @@ public class MilkBlossom : MonoBehaviour
         AllAllowedMovesHighlighter(activeTile);
 
         // first, unhighlight all tiles
-        foreach (tile t in tileList)
+        foreach (tile t in GameManager.tileList)
         {
             t.SetHighlight(false, highlightColorList[0]);
         }
@@ -632,7 +632,7 @@ public class MilkBlossom : MonoBehaviour
             // does the tile exist
             try
             {
-                foreach (tile t in tileList)
+                foreach (tile t in GameManager.tileList)
                 {
                     if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
                     {
@@ -716,7 +716,7 @@ public class MilkBlossom : MonoBehaviour
         // This should return a boolean?
         
         // Feels like there should be a ValidMove parameter on the board tiles
-        if(tileList[targetRange].GetHighlight() == false)
+        if(GameManager.tileList[targetRange].GetHighlight() == true)
         {
             return false;
         } 
@@ -826,17 +826,17 @@ public class MilkBlossom : MonoBehaviour
                     Vector3 relativeDir = directions[d] * r;
 
                     // check the tile by cycling all tiles
-                    for (int i = 0; i < tileList.Count; i++)
+                    for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
                         // blank out mmove value for tiles
-                        tileList[i].moveValues[activePlayer] = 0;
-                        if (tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
+                        GameManager.tileList[i].moveValues[activePlayer] = 0;
+                        if (GameManager.tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
                         {
-                            if (tileList[i].GetActive() && !tileList[i].GetOccupied())
+                            if (GameManager.tileList[i].GetActive() && !GameManager.tileList[i].GetOccupied())
                             {
-                                potentialTiles.Add(tileList[i]);
+                                potentialTiles.Add(GameManager.tileList[i]);
                                 // some weighting for guaranteed points from next move
-                                tileValues.Add(tileList[i].points * firstMoveWeight);
+                                tileValues.Add(GameManager.tileList[i].points * firstMoveWeight);
                             }
                             else
                             {
@@ -861,14 +861,14 @@ public class MilkBlossom : MonoBehaviour
                     Vector3 relativeDir = directions[d] * r;
 
                     // check the tile by cycling all tiles
-                    for (int i = 0; i < tileList.Count; i++)
+                    for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
-                        if (tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
+                        if (GameManager.tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
                         {
-                            if (tileList[i].GetActive() && !tileList[i].GetOccupied())
+                            if (GameManager.tileList[i].GetActive() && !GameManager.tileList[i].GetOccupied())
                             {
                                 // some weighting for guaranteed points from next move
-                                tileValues[t] += tileList[i].points * secondMoveWeight;
+                                tileValues[t] += GameManager.tileList[i].points * secondMoveWeight;
                             }
                         }
                     }
@@ -919,17 +919,17 @@ public class MilkBlossom : MonoBehaviour
                     Vector3 relativeDir = directions[d] * r;
 
                     // check the tile by cycling all tiles
-                    for (int i = 0; i < tileList.Count; i++)
+                    for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
                         // blank out mmove value for tiles
-                        tileList[i].moveValues[activePlayer] = 0;
-                        if (tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
+                        GameManager.tileList[i].moveValues[activePlayer] = 0;
+                        if (GameManager.tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
                         {
-                            if (tileList[i].GetActive() && !tileList[i].GetOccupied())
+                            if (GameManager.tileList[i].GetActive() && !GameManager.tileList[i].GetOccupied())
                             {
-                                potentialTiles.Add(tileList[i]);
+                                potentialTiles.Add(GameManager.tileList[i]);
                                 // some weighting for guaranteed points from next move
-                                tileValues.Add(tileList[i].points * firstMoveWeight);
+                                tileValues.Add(GameManager.tileList[i].points * firstMoveWeight);
                             }
                             else
                             {
@@ -954,14 +954,14 @@ public class MilkBlossom : MonoBehaviour
                     Vector3 relativeDir = directions[d] * r;
 
                     // check the tile by cycling all tiles
-                    for (int i = 0; i < tileList.Count; i++)
+                    for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
-                        if (tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
+                        if (GameManager.tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
                         {
-                            if (tileList[i].GetActive() && !tileList[i].GetOccupied())
+                            if (GameManager.tileList[i].GetActive() && !GameManager.tileList[i].GetOccupied())
                             {
                                 // some weighting for guaranteed points from next move
-                                tileValues[t] += tileList[i].points * secondMoveWeight;
+                                tileValues[t] += GameManager.tileList[i].points * secondMoveWeight;
                             }
                         }
                     }
@@ -989,16 +989,16 @@ public class MilkBlossom : MonoBehaviour
                     {
                         Vector3 relativeDir = directions[d] * r;
                         // check the tile by cycling all tiles
-                        for (int i = 0; i < tileList.Count; i++)
+                        for (int i = 0; i < GameManager.tileList.Count; i++)
                         {
-                            if (tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
+                            if (GameManager.tileList[i].cubePosition == potentialTiles[t].cubePosition + relativeDir)
                             {
-                                if (tileList[i].GetActive() && !tileList[i].GetOccupied())
+                                if (GameManager.tileList[i].GetActive() && !GameManager.tileList[i].GetOccupied())
                                 {
-                                    if (tileList[i].cubePosition != p.playerTile.cubePosition)
+                                    if (GameManager.tileList[i].cubePosition != p.playerTile.cubePosition)
                                     {
-                                        potentialSecondTiles.Add(tileList[i]);
-                                        // tileValues.Add(tileList[i].points * secondMoveWeight);
+                                        potentialSecondTiles.Add(GameManager.tileList[i]);
+                                        // tileValues.Add(GameManager.tileList[i].points * secondMoveWeight);
                                     }
                                 }
                                 else

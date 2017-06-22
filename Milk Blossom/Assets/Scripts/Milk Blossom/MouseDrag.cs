@@ -24,7 +24,7 @@ public class MouseDrag : MonoBehaviour {
     void OnMouseDrag()
     {
         // Can only happen if the game is in Live mode
-        if (GameObject.Find("GameController").GetComponent<MilkBlossom>().currentState == MilkBlossom.states.live)
+        if (GameManager.Instance.currentState == GameManager.states.live)
         {
 
             // only allow dragging for the active player. 
@@ -106,7 +106,7 @@ public class MouseDrag : MonoBehaviour {
 
                 // Check with the hex board whether the move is legitimate or not
                 // Get tileindex by looking up position
-                int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), MilkBlossom.tileList);
+                int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), GameManager.tileList);
                 Debug.Log("Move to tile " + i.ToString());
                 MoveablePiece arg = new MoveablePiece();
                 // Try action on the basis of the inded
