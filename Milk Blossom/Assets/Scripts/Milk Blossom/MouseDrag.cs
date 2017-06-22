@@ -100,7 +100,7 @@ public class MouseDrag : MonoBehaviour {
         arr = Physics2D.OverlapCircleAll(transform.position, 0.03f);
         foreach(Collider2D a in arr)
         {
-            if (a.transform.tag == "Hex")
+            if (a.transform.tag == "Tile")
             {
                 targetTile = a.transform;
 
@@ -118,8 +118,6 @@ public class MouseDrag : MonoBehaviour {
                     return false;
                 }
 
-                // let's assume the move is legitimate
-                return true;
             }
         }
             return false;

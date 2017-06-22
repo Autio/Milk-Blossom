@@ -8,10 +8,13 @@ public class PointsBehaviour : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         speed = Random.Range(0.6f, 0.9f);
+        Debug.Log(Toolbox.Instance.testVar);
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
+        
 	    if(rising)
         {
             if(transform.position.z > restingZ)

@@ -48,6 +48,7 @@ public class player {
 
     public bool GetAI()
     {
+       
         return AI;
     }
 
