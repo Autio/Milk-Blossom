@@ -55,21 +55,16 @@ public class MilkBlossom : MonoBehaviour
 
     // MAIN GAME LOGIC
     Camera mainCam;
-    public enum states { starting, planning, live, moving, ending, paused };
-    public states currentState = states.starting;
     bool firstTurn = true;
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
-    public enum controlOptions { keyboard, mouse, touch };
-    public controlOptions controlOption = controlOptions.mouse;
-
+    
     public GameObject[] pointsObjects;
     public GameObject hexTile;
     public GameObject[] scoreObjects;
     private GameObject timerBar;
     public bool timed = false; // do human players have limited time to do turns or not
-
 
     // Tile map attributes
     public hexGrid liveHexGrid;
@@ -156,12 +151,12 @@ public class MilkBlossom : MonoBehaviour
                     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = true;
                 }
             }
-                    }
+        }
     }
 
 
     void IncrementActivePlayer()
-    {
+    { 
         activePlayer++;
         if (activePlayer >= players)
         {
@@ -194,7 +189,7 @@ public class MilkBlossom : MonoBehaviour
             else
             {
                 // transition to end state
-                StartCoroutine(switchState(states.ending, 2.0f));
+                StartCoroutine(switchState(GameManager.states.ending, 2.0f));
             }
 
         }
@@ -255,7 +250,7 @@ public class MilkBlossom : MonoBehaviour
 
 
         // once game is setup, set it to live
-        StartCoroutine(switchState(states.live, 5.0f));
+        StartCoroutine(switchState(GameManager.states.live, 5.0f));
 
         // set player amounts
         for (int i = 0; i < players; i++)
@@ -272,16 +267,16 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-    IEnumerator switchState(states s, float delay)
+    IEnumerator switchState(GameManager.states s, float delay = 0.0f)
     {
         // first pause the game in transition limbo until the delay has passed
-        currentState = states.paused;
+        GameManager.Instance.currentState = GameManager.states.paused;
         yield return new WaitForSeconds(delay);
 
         // then switch to desired state
-        currentState = s;
+        GameManager.Instance.currentState = s;
 
-        if(currentState == states.live)
+        if(GameManager.Instance.currentState == GameManager.states.live)
         {
             // Set active tile based on player
             activeTile = SelectPlayer(0);
@@ -310,7 +305,7 @@ public class MilkBlossom : MonoBehaviour
         //timerBar.transform.GetComponent<ProgressBar.ProgressBarBehaviour>().SetFillerSize();
         // timer before live
 
-        if (currentState == states.live)
+        if (GameManager.Instance.currentState == GameManager.states.live)
         {
             if(firstTurn)
             {
@@ -420,14 +415,12 @@ public class MilkBlossom : MonoBehaviour
                 currentDir = 1;
             }
 
-
-            if (controlOption == controlOptions.mouse)
+            /*
+            if (GameManager.Instance.activeControlOptions.(GameManager.controlOptions.mouse))
             {
-
-
-
+                                
             }
-
+            */
             tile targetTile = null;
 
             if (Input.GetKey(KeyCode.T))
@@ -469,7 +462,7 @@ public class MilkBlossom : MonoBehaviour
 
         }
 
-        if (currentState == states.ending)
+        if (GameManager.Instance.currentState == GameManager.states.ending)
         {
             int hiPlayer = 0;
             int hiScore = 0;
@@ -690,7 +683,7 @@ public class MilkBlossom : MonoBehaviour
     void MakeMove(player p, tile targetTile)
     {
 
-        switchState(states.moving, 0.0f);
+        switchState(GameManager.states.moving, 0.0f);
         // player makes a move
 
         // acquire points
@@ -754,7 +747,7 @@ public class MilkBlossom : MonoBehaviour
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
     {
-        currentState = states.moving;
+        switchState(GameManager.states.moving, 0.0f);
         Transform wheelChild = unit.playerWheelTransform;
         Vector2 lookPos = targetPos - sourcePos;
         Quaternion rotation = Quaternion.LookRotation(Vector3.forward, lookPos);
@@ -781,7 +774,7 @@ public class MilkBlossom : MonoBehaviour
         }
         unit.playerGameObject.transform.position = targetPos;
 
-        currentState = states.live;
+        switchState(GameManager.states.live); ;
         // Only once object has moved, do we increment to the next player
         yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();
@@ -794,10 +787,10 @@ public class MilkBlossom : MonoBehaviour
         // see if a move is feasible
         if (ValidMoves(p))
         {
-            if (currentState == states.live)
+            if (GameManager.Instance.currentState == GameManager.states.live)
             {
-                currentState = states.paused;
-                switchState(states.moving, 0.2f);
+                GameManager.Instance.currentState = GameManager.states.paused;
+                switchState(GameManager.states.moving, 0.2f);
                 targetTile = PseudoAIMove(p);
                 MakeMove(p, targetTile);
             }
