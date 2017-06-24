@@ -68,6 +68,8 @@ public class MilkBlossom : MonoBehaviour
     public bool timed = false; // do human players have limited time to do turns or not
 
     // Tile map attributes
+
+    // Since tile maps should change per level this needs to be made less static
     public hexGrid liveHexGrid;
     public int hexGridx = 5;
     public int hexGridy = 5;
@@ -98,7 +100,6 @@ public class MilkBlossom : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-
         for (int c = 0; c < 3; c++)
         {
             highlightColorList[c] = highlightColorsListPublic[c];
@@ -267,6 +268,7 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
+    // Could be done with the state machine instead - 20170624
     IEnumerator switchState(GameManager.states s, float delay = 0.0f)
     {
         // first pause the game in transition limbo until the delay has passed
@@ -294,16 +296,12 @@ public class MilkBlossom : MonoBehaviour
 
         // Debug.Log("active player " + activePlayer);
         // Debug.Log("current state " + currentState);
-        // RESET
+        // RESET GAME
         if (Input.GetKey(KeyCode.Escape))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 
         }
-
-        //        timerBar.transform.GetComponent<ProgressBar.ProgressBarBehaviour>().SetFillerSizeAsPercentage(100);
-        //timerBar.transform.GetComponent<ProgressBar.ProgressBarBehaviour>().SetFillerSize();
-        // timer before live
 
         if (GameManager.Instance.currentState == GameManager.states.live)
         {
@@ -343,24 +341,24 @@ public class MilkBlossom : MonoBehaviour
             // debug visualisations 
             if (Input.GetKey(KeyCode.F1))
             {
-                liveHexGrid.DisplayIndices();
+                liveHexGrid.DisplayIndices(GameManager.tileList);
             }
             if (Input.GetKey(KeyCode.F2))
             {
-                liveHexGrid.DisplayCoords();
+                liveHexGrid.DisplayCoords(GameManager.tileList);
             }
             if (Input.GetKey(KeyCode.F3))
             {
-                liveHexGrid.DisplayPoints();
+                liveHexGrid.DisplayPoints(GameManager.tileList);
             }
 
             if (Input.GetKey(KeyCode.F4))
             {
-                liveHexGrid.DisplayMoveValues(activePlayer);
+                liveHexGrid.DisplayMoveValues(activePlayer, GameManager.tileList);
             }
             if (Input.GetKey(KeyCode.F5))
             {
-                liveHexGrid.DisplayClear();
+                liveHexGrid.DisplayClear(GameManager.tileList);
             }
             // DEBUG TURN SWITCHING
             if (Input.GetKey(KeyCode.N))
