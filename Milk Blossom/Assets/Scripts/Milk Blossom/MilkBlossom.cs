@@ -716,13 +716,14 @@ public class MilkBlossom : MonoBehaviour
         // This should return a boolean?
         
         // Feels like there should be a ValidMove parameter on the board tiles
-        if(GameManager.tileList[targetRange].GetHighlight() == true)
+        if(GameManager.tileList[targetTileIndex].GetHighlight())
         {
-            return false;
+            IncrementActivePlayer();
+            return true;
         } 
         else
         {
-            return true;
+            return false;
         }
 
         // acquire points

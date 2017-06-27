@@ -74,7 +74,6 @@ public class MouseDrag : MonoBehaviour {
         }
         if (currentState == dragStates.movingToTarget)
         {
-            //transform.parent.position = targetTile.position + zOffset;
             transform.parent.position = targetTile.position + zOffset;
             Debug.Log("Moving to target");
             float distCovered = (Time.time - startTime) * speed;
@@ -96,6 +95,7 @@ public class MouseDrag : MonoBehaviour {
     bool CheckMove()
     {
         Collider2D[] arr;
+        targetTile = null;
         // set float such that the player has a bit of leeway and prefer cancelling the move rather than doing it to an unintended hex
         arr = Physics2D.OverlapCircleAll(transform.position, 0.03f);
         foreach(Collider2D a in arr)
@@ -109,7 +109,8 @@ public class MouseDrag : MonoBehaviour {
                 int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), GameManager.tileList);
                 Debug.Log("Move to tile " + i.ToString());
                 MoveablePiece arg = new MoveablePiece();
-                // Try action on the basis of the inded
+
+                // Try action on the basis of the index
                 if (GameController.MouseMakeMove(arg, i))
                 {
                     return true;
