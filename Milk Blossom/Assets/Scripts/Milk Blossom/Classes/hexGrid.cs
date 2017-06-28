@@ -78,7 +78,7 @@ public class hexGrid  {
 
                 }
                 tileList[t].tileObject.transform.parent = GameObject.Find("HexGrid").transform;
-                tileList[t].tileObject.transform.Find("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
+                tileList[t].tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
                 yield return new WaitForSeconds(standardDelay);
             }
 
@@ -321,14 +321,22 @@ public class hexGrid  {
             try
             {
                 //string existingText = targetObject.transform.FindChild("debugtext").gameObject.GetComponent<DebugTooltip>().debugText;
-                targetObject.transform.Find("debugtext").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
+                targetObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
+            if (inputText == "")
+            {
+                targetObject.transform.Find("DebugText").FindChild("DebugTextBackground").gameObject.SetActive(false);
+            } else
+            {
+                targetObject.transform.Find("DebugText").FindChild("DebugTextBackground").gameObject.SetActive(true);
             }
-            catch
+        }
+        catch
             {
                 Debug.Log("Failed to add text");
             }
 
         }
+
         public void DisplayIndices(List<tile> tileList = null)
         {
             // simply number tiles
