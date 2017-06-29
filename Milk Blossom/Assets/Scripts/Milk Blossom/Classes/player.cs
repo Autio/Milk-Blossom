@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player {
+public class player : moveablePiece {
 
     [Range(1, 4)]
     public int playerNumber;

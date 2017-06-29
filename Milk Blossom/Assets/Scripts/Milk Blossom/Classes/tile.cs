@@ -11,6 +11,7 @@ public class tile {
         public int index;
         bool active = true;
         public bool occupied = false;
+        bool validMove = false;
         bool highlighted = false;
         public int highlightColor;
         public GameObject tileObject;
@@ -40,11 +41,20 @@ public class tile {
                 }
             }
         }
+
+
         public bool GetHighlight()
         {
             return highlighted;
         }
-
+        public void SetValidMove(bool isValid)
+        {
+            validMove = isValid;
+        }
+        public bool GetValidMove()
+        {
+            return validMove;
+        }
         public void SetOccupied(bool occupyFlag)
         {
             occupied = occupyFlag;

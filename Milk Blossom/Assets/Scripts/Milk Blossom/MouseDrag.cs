@@ -74,7 +74,7 @@ public class MouseDrag : MonoBehaviour {
         }
         if (currentState == dragStates.movingToTarget)
         {
-            transform.parent.position = targetTile.position + zOffset;
+            transform.parent.position = targetTile.position + zOffset; // Move the parent object
             Debug.Log("Moving to target");
             float distCovered = (Time.time - startTime) * speed;
             float fracJourney = distCovered / journeyLength;
@@ -82,10 +82,11 @@ public class MouseDrag : MonoBehaviour {
 
             if (transform.position == (targetTile.position + zOffset))
             {
+                
                 currentState = dragStates.idle;
 
-                // Move the main object, not just the sprite
-                //transform.parent.position = transform.localPosition;
+                // The move is complete and the appropriate inc
+                //GameController.MakeMove(new tile(), new tile(), new player());
             }
         }
 
@@ -108,10 +109,10 @@ public class MouseDrag : MonoBehaviour {
                 // Get tileindex by looking up position
                 int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), GameManager.tileList);
                 Debug.Log("Move to tile " + i.ToString());
-                MoveablePiece arg = new MoveablePiece();
+                player arg = new player();
 
                 // Try action on the basis of the index
-                if (GameController.MouseMakeMove(arg, i))
+                if (GameController.CheckMove(i))
                 {
                     return true;
                 } else

@@ -16,7 +16,7 @@ public class hexGrid  {
     public GameObject[] pointsObjects;
 
     private float offsetX, offsetY;
-    private float standardDelay = 0.03f;
+    private float standardDelay = 0.02f;
     private string superSecretMessage = "Videogames Rot Your Brains Videogames Rot Your Brains Videogames Rot Your Brains";
     // list of positions
     Vector3 maxBounds = new Vector3(0, 0, 0);
@@ -29,7 +29,7 @@ public class hexGrid  {
     public IEnumerator CreateHexShapedGrid(GameObject hexTile, int gridRadius = 3, List<tile> tileList = null, Sprite[] tileSprites = null, List<player> playerList = null)
         {
 
-            float delayModifier = 1.0f;
+            float delayModifier = 0.8f;
             float unitLength = (useAsInnerCircleRadius) ? (radius / Mathf.Sqrt(3) / 2) : radius;
 
             offsetX = unitLength * Mathf.Sqrt(3);
@@ -85,7 +85,7 @@ public class hexGrid  {
         // do remaining setup things within ienumerator to ensure sequence is correct
         // 2: Is this the correct place? 
             AllocatePoints(tileList);
-            yield return new WaitForSeconds(1.2f);
+            yield return new WaitForSeconds(0.8f);
             AllocatePlayers(playerObj, tileList, playerList);
 
             // Set starting player 
@@ -324,10 +324,10 @@ public class hexGrid  {
                 targetObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = inputText;
             if (inputText == "")
             {
-                targetObject.transform.Find("DebugText").FindChild("DebugTextBackground").gameObject.SetActive(false);
+                targetObject.transform.Find("DebugText").Find("DebugTextBackground").gameObject.SetActive(false);
             } else
             {
-                targetObject.transform.Find("DebugText").FindChild("DebugTextBackground").gameObject.SetActive(true);
+                targetObject.transform.Find("DebugText").Find("DebugTextBackground").gameObject.SetActive(true);
             }
         }
         catch

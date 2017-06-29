@@ -30,6 +30,21 @@ public class MilkBlossom : MonoBehaviour
     // Timer    
     // Overall aesthetic
 
+        /* ---- To do 29/6/2017 ----
+         * Proper handling of mouse movement -> make sure effects on grid are comprehensive
+         * Make startup loop faster
+         * Merge touch functionality to be parallel to mouse functionality
+         * Test on phone
+         * 
+         * Map out separation of game logic
+         * Finish game loop
+         * Get unit art
+         * Improve AI
+         * Juice: Pop-up texts
+         * Research / brainstorm juiciness
+         * Think about audio: soundtrack & effects 
+         */
+
     // AI for enemies: 
     // first scan straight line options
     // for the tiles with three points, also check the next move for whether there are more
@@ -76,11 +91,12 @@ public class MilkBlossom : MonoBehaviour
     public float hexRadius = 0.5f;
     public int hexGridRadius = 3;
     private int targetRange = 2;
-    private float turnCooldown = 0.5f;
+    private float turnCooldown = 0.3f;
     private float moveCoolDown = 2.0f;
     public float turnTimeLimit = 10f;
     private float turnTimeCounter = 0;
     public bool useAsInnerCircleRadius = true;
+
     static tile activeTile; // does it make sense to keep the active tile as a variable like this?
 
     // player info, would be better in a class probably. Limiting players to 4
@@ -100,6 +116,10 @@ public class MilkBlossom : MonoBehaviour
     // Use this for initialization
     void Start()
     {
+        // DEFAULT TO ENGLISH
+        LocalisationManager.Instance.LoadLocalisedText("English.json");
+        Debug.Log(LocalisationManager.Instance.GetLocalisedValue("game_title"));
+
         for (int c = 0; c < 3; c++)
         {
             highlightColorList[c] = highlightColorsListPublic[c];
@@ -157,7 +177,7 @@ public class MilkBlossom : MonoBehaviour
 
 
     void IncrementActivePlayer()
-    { 
+    {
         activePlayer++;
         if (activePlayer >= players)
         {
@@ -170,7 +190,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Show all possible moves when dragging & dropping
         AllAllowedMovesHighlighter(activeTile);
-
+        
 
         if (!ValidMoves(playerList[activePlayer]))
         {
@@ -251,7 +271,7 @@ public class MilkBlossom : MonoBehaviour
 
 
         // once game is setup, set it to live
-        StartCoroutine(switchState(GameManager.states.live, 5.0f));
+        StartCoroutine(switchState(GameManager.states.live, 3.4f));
 
         // set player amounts
         for (int i = 0; i < players; i++)
@@ -569,12 +589,13 @@ public class MilkBlossom : MonoBehaviour
                                 if (t.GetActive() && !t.GetOccupied())
                                 {
                                     t.SetHighlight(true, highlightColorList[0]);
+                                    t.SetValidMove(true);
                                 }
                                 else
                                 {
                                     t.SetHighlight(false, highlightColorList[0]);
                                     directionBlocked = true;
-
+                                    t.SetValidMove(false);
                                     // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
                                     //range = r; // bad practice, setting an int within the function that's returning a type
                                     //targetTile.highlightColor = 2;
@@ -681,7 +702,7 @@ public class MilkBlossom : MonoBehaviour
     void MakeMove(player p, tile targetTile)
     {
 
-        switchState(GameManager.states.moving, 0.0f);
+        switchState(GameManager.states.moving, 0.2f);
         // player makes a move
 
         // acquire points
@@ -708,40 +729,72 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-    public bool MouseMakeMove(MoveablePiece m, int targetTileIndex)
+    public bool CheckMove(int targetTileIndex)
     {
-        // Tiles should always be referred to byt their index
-        // This should return a boolean?
-        
-        // Feels like there should be a ValidMove parameter on the board tiles
-        if(GameManager.tileList[targetTileIndex].GetHighlight())
+        // This is dependent on the board valid moves being updated appropriately for the active player
+        tile targetTile = GameManager.tileList[targetTileIndex];
+        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
         {
-            IncrementActivePlayer();
             return true;
-        } 
+        }
         else
         {
             return false;
         }
+                   
+    }
 
+    public void MakeMove(tile sourceTile, tile targetTile, int playerIndex = 0)
+    {
+        player p;
+        if(playerIndex == 0)
+        {
+            p = playerList[activePlayer];
+        } else
+        {
+            p = playerList[playerIndex];
+        }
+
+        // Acquire points - need
+        // 1) point amount, so need the tile the player is moving away from
+        // 2) Display a popup text with that value and that should happen from the source tile
+        AcquirePoints(sourceTile, p);
+        
+               
+        // Tiles should always be referred to byt their index
+        // This should return a boolean?
+        //tile targetTile = GameManager.tileList[targetTileIndex];
+
+        
+              
         // acquire points
         //p.AddPoints(p.playerTile.points);
+
+
 
         // leave current tile (by index)
         //liveHexGrid.leaveTile(p.playerTile);
 
         // arrive on new tile (by index)
+        IncrementActivePlayer();
 
         // set player tile as the target tile
         //p.playerTile = targetTile;
-        //activeTile = targetTile;
-        //liveHexGrid.enterTile(activeTile);
+        activeTile = targetTile;
+        liveHexGrid.enterTile(activeTile);
 
         // update scores
         UpdateScores();
 
-        return false;
 
+    }
+
+    void AcquirePoints(tile t, player p)
+    {
+        // Increment the point count of the active player
+        p.AddPoints(t.points);
+        // Display that increase as a floating text above the tile that was left
+        Toolbox.Instance.SpawnText(t.points.ToString() + " points!", t.offsetPosition);
     }
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)

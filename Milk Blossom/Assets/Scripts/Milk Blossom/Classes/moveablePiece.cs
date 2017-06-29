@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MoveablePiece : MonoBehaviour {
+public class moveablePiece : MonoBehaviour {
 
     // Any object that can be moved on the board: Player, enemy, obstacle - depending on game
 
@@ -10,13 +10,8 @@ public class MoveablePiece : MonoBehaviour {
     // A location for itself
     // Mouse draggability? Touch controllability?
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    bool moveable;
+    Vector3 location;
+
+
 }

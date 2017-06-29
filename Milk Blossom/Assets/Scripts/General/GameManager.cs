@@ -24,7 +24,7 @@ public class GameManager : Singleton<GameManager>
     {
         activeControlOptions[0] = controlOptions.mouse;
         activeControlOptions[1] = controlOptions.touch;
-
+        
     }
 
     [System.Serializable]
