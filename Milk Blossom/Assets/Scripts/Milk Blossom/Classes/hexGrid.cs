@@ -10,7 +10,7 @@ public class hexGrid  {
     public float radius = 0.5f;
     public bool useAsInnerCircleRadius = true;
     int tileCount = 0;
-    public int playerCount = 3;
+    public int playerCount = 2; // count, not index
     public int AIPlayerCount;
     public GameObject playerObj;
     public GameObject[] pointsObjects;
@@ -130,7 +130,7 @@ public class hexGrid  {
                                 // this tile gets 1 point
                                 chosenTile.points = k + 1;
                                 // Instantiate points object
-                                float zOffset = 1f;
+                                float zOffset = 0.1f;
                                 GameObject pointsObject = (GameObject)UnityEngine.MonoBehaviour.Instantiate(pointsObjects[k], new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, zOffset), Quaternion.identity);
                                 chosenTile.tilePointsObject = pointsObject;
                                 // AddDebugText(chosenTile.tileObject, chosenTile.points.ToString());
@@ -193,6 +193,8 @@ public class hexGrid  {
                             Debug.Log("Player " + p.ToString() + " set to AI");
                         }
 
+
+                        // first player always a human? Should be randomised
                         if (p == 1)
                         {
                             if (!pl.GetAI())

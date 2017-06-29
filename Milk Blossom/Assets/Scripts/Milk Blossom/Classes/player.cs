@@ -5,7 +5,7 @@ using UnityEngine;
 public class player : moveablePiece {
 
     [Range(1, 4)]
-    public int playerNumber;
+    public int playerNumber; // Number, not index
     bool AI = false;
     bool alive = true;
     Vector3 cubePosition;

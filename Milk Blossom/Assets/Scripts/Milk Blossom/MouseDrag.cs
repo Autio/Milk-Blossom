@@ -13,6 +13,8 @@ public class MouseDrag : MonoBehaviour {
     enum dragStates {inactive, returning, movingToTarget, idle};
     dragStates currentState;
     MilkBlossom GameController;
+    int sourceTileIndex;
+    int targetTileIndex;
 
     void Start()
     {
@@ -20,6 +22,11 @@ public class MouseDrag : MonoBehaviour {
         GameController = GameObject.Find("GameController").GetComponent<MilkBlossom>();
     }
     // Dragging player sprites
+    private void OnMouseDown()
+    {
+        sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
+
+    }
 
     void OnMouseDrag()
     {
@@ -85,8 +92,10 @@ public class MouseDrag : MonoBehaviour {
                 
                 currentState = dragStates.idle;
 
+                targetTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(targetTile.transform.position.x, targetTile.transform.position.y), GameManager.tileList);
+              
                 // The move is complete and the appropriate inc
-                //GameController.MakeMove(new tile(), new tile(), new player());
+                GameController.MakeMove(sourceTileIndex, targetTileIndex);
             }
         }
 

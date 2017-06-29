@@ -1,1 +1,4 @@
-{"items":[{"key":"game_title","value":"Quiz Game"},{"key":"start_button","value":"Start Game"}]}
+{"items":[{"key":"game_title","value":"Milk Blossom"},
+{"key":"start_button","value":"Start Game"},
+{"key":"points", "value":" points!"}
+]}
