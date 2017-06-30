@@ -318,7 +318,7 @@ public class hexGrid  {
 
 
         // DEBUG METHODS
-        void AddDebugText(GameObject targetObject, string inputText)
+        void AddDebugText(GameObject targetObject, string inputText, int fontSize = 18)
         {
             try
             {
@@ -330,6 +330,7 @@ public class hexGrid  {
             } else
             {
                 targetObject.transform.Find("DebugText").Find("DebugTextBackground").gameObject.SetActive(true);
+                targetObject.transform.Find("DebugText").GetComponent<TextMesh>().fontSize = fontSize;
             }
         }
         catch
@@ -358,7 +359,7 @@ public class hexGrid  {
             for (int i = 0; i < tileList.Count; i++)
             {
                 string coordText = tileList[i].cubePosition.x.ToString() + ", " + tileList[i].cubePosition.y.ToString() + ", " + tileList[i].cubePosition.z.ToString();
-                AddDebugText(tileList[i].tileObject, coordText);
+                AddDebugText(tileList[i].tileObject, coordText, 8);
             }
             if (tileList == null)
             {
