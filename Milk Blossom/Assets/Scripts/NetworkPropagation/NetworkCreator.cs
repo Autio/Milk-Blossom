@@ -15,6 +15,8 @@ public class NetworkCreator : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        Transform nodeParent = GameObject.Find("Nodes").transform;
+        Transform lineParent = GameObject.Find("Links").transform;
         // create nodes
         for (int i = 0; i < networkNodes; i++)
         {
@@ -25,6 +27,9 @@ public class NetworkCreator : MonoBehaviour {
             nodes.Add(n);
             n.nodeObject = newNodeObject;
             n.id = i;
+            n.spawner = true;
+            n.nodeObject.transform.parent = nodeParent;
+
         }
         // create links
         foreach (Node n in nodes)
@@ -68,10 +73,11 @@ public class NetworkCreator : MonoBehaviour {
         {
             foreach (Node nei in n.neighbours)
             {
-                GameObject newLine = new GameObject();
-                newLine.AddComponent<LineRenderer>().SetPositions(new Vector3[] { n.nodeObject.transform.position, nei.nodeObject.transform.position });
-                newLine.GetComponent<LineRenderer>().SetWidth(0.07f, 0.07f);
-                n.nodeLines.Add(newLine);
+                GameObject newLink = new GameObject();
+                newLink.AddComponent<LineRenderer>().SetPositions(new Vector3[] { n.nodeObject.transform.position, nei.nodeObject.transform.position });
+                newLink.GetComponent<LineRenderer>().SetWidth(0.07f, 0.07f);
+                n.nodeLinks.Add(newLink);
+                newLink.transform.parent = nodeParent;
             }
         }
 
@@ -82,7 +88,9 @@ public class NetworkCreator : MonoBehaviour {
     {
         foreach (Node o in nodes)
         {
-            o.nodeObject.transform.Translate(new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f)) * Time.deltaTime * 0.5f);
+
+            //o.nodeObject.transform.Translate(new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f)) * Time.deltaTime * 0.5f);
+
             foreach (Node n in o.neighbours)
             {
                 float lineWidth = 3.0f;
@@ -97,10 +105,21 @@ public class NetworkCreator : MonoBehaviour {
                 Vector3 b = start + side * (lineWidth / -2);
                 Vector3 c = end + side * (lineWidth / 2);
                 Vector3 d = end + side * (lineWidth / -2);
-
-                
-                Debug.DrawLine(o.nodeObject.transform.position, n.nodeObject.transform.position, Color.green);
+                               
+                //Debug.DrawLine(o.nodeObject.transform.position, n.nodeObject.transform.position, Color.green);
             }
         }
+    }
+
+    public bool CheckNode(int id)
+    {
+        foreach(Node n in nodes)
+        {
+            if(n.id == id)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
