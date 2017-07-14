@@ -30,7 +30,7 @@ public class TouchManager : MonoBehaviour {
                         guiTouch = true;
                         break;
                     case TouchPhase.Ended:
-                        SendMessage("OnFirstTouchEdned", SendMessageOptions.DontRequireReceiver);
+                        SendMessage("OnFirstTouchEnded", SendMessageOptions.DontRequireReceiver);
                         guiTouch = false;
                         break;
                 }
