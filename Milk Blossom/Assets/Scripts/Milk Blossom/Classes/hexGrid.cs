@@ -199,7 +199,8 @@ public class hexGrid  {
                         {
                             if (!pl.GetAI())
                             {
-                                pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+
+                                pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                             }
                         }
 

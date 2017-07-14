@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 
-
 public class MilkBlossom : MonoBehaviour
 {
     // TODO 
@@ -154,20 +153,20 @@ public class MilkBlossom : MonoBehaviour
         {
             if (p.playerNumber != (activePlayerIndex + 1)) // +1 is correct
             {
-                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
-                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
+             //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
             }
             else
             {
                 if (p.GetAI())
                 {
-                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
-                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = false;
+               //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
                 }
                 else
                 {
-                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
-                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<MouseDrag>().enabled = true;
+                 //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                 }
             }
         }
@@ -748,9 +747,7 @@ public class MilkBlossom : MonoBehaviour
         {
             p = playerList[playerIndex];
         }
-
-
-
+    
         // Acquire points - need
         // 1) point amount, so need the tile the player is moving away from
         // 2) Display a popup text with that value and that should happen from the source tile

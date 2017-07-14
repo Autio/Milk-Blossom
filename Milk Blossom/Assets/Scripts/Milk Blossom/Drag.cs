@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MouseDrag : MonoBehaviour {
+public class Drag : ControlManager {
+
+    // Make this a child of the touch manager and handle mouse vs touch more intelligently here. 
+    // Don't have separate classes for mouse and touch
 
     private float startTime;
     private float journeyLength;
@@ -15,55 +18,123 @@ public class MouseDrag : MonoBehaviour {
     MilkBlossom GameController;
     int sourceTileIndex;
     int targetTileIndex;
+    bool touch;
 
     void Start()
     {
+        touch = false;
         currentState = dragStates.idle;
         GameController = GameObject.Find("GameController").GetComponent<MilkBlossom>();
     }
+
+    // MOUSE 
     // Dragging player sprites
     private void OnMouseDown()
     {
-        sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
-
+        if (!touch)
+        {
+            sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
+        }
     }
 
     void OnMouseDrag()
     {
-        // Can only happen if the game is in Live mode
-        if (GameManager.Instance.currentState == GameManager.states.live)
+        if (!touch)
         {
-
-            // only allow dragging for the active player. 
-            if (this.enabled)
+            // Can only happen if the game is in Live mode
+            if (GameManager.Instance.currentState == GameManager.states.live)
             {
-                Vector3 pos;
-                pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y, transform.position.z);
-                transform.position = pos;
+
+                // only allow dragging for the active player. 
+                if (this.enabled)
+                {
+                    Vector3 pos;
+                    pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.mousePosition).x, Camera.main.ScreenToWorldPoint(Input.mousePosition).y, transform.position.z);
+                    transform.position = pos;
+                }
             }
         }
     }
 
     void OnMouseUp()
     {
-
-        Debug.Log("Drag ended");
-        // check whether legitimate or not
-        startPos = transform.position;
-        startTime = Time.time;
-        journeyLength = Vector3.Distance(transform.position, transform.parent.position);
-        //        transform.position = transform.parent.position;
-        currentState = dragStates.returning;
-        if (CheckMove())
+        Debug.Log("Mouse drag ended");
+        if (!touch)
         {
-            currentState = dragStates.movingToTarget;
-        } else
-        {
+            // check whether legitimate or not
+            startPos = transform.position;
+            startTime = Time.time;
+            journeyLength = Vector3.Distance(transform.position, transform.parent.position);
+            //        transform.position = transform.parent.position;
             currentState = dragStates.returning;
+            if (CheckMove())
+            {
+                currentState = dragStates.movingToTarget;
+            }
+            else
+            {
+                currentState = dragStates.returning;
+            }
         }
-
-
     }
+
+
+    // TOUCH CONTROL
+    void OnFirstTouch()
+    {
+        touch = true;
+        sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
+
+        if (touch)
+        {
+            try
+            {
+                if (GameManager.Instance.currentState == GameManager.states.live)
+                {
+
+                    // only allow dragging for the active player. 
+                    if (this.enabled)
+                    {
+                        Vector3 pos;
+                        pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).x, Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).y, transform.position.z);
+                        transform.position = pos;
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+    }
+
+
+
+    void OnFirstTouchEnded()
+    {
+        if (touch)
+        {
+            Debug.Log("Touch drag ended");
+            // check whether legitimate or not
+            startPos = transform.position;
+            startTime = Time.time;
+            journeyLength = Vector3.Distance(transform.position, transform.parent.position);
+            //        transform.position = transform.parent.position;
+            currentState = dragStates.returning;
+            if (CheckMove())
+            {
+                currentState = dragStates.movingToTarget;
+            }
+            else
+            {
+                currentState = dragStates.returning;
+            }
+
+        }
+        touch = false;
+    }
+
+    // GENERAL
 
     void Update()
     {

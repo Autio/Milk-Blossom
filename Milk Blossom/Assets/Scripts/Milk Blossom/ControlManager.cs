@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TouchManager : MonoBehaviour {
+public class ControlManager : MonoBehaviour {
 
     public static bool guiTouch = false;
 

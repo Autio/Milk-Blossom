@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TouchDrag : TouchManager {
+public class TouchDrag : ControlManager {
     // Replicating mouse drag but for touch
     private float startTime;
     private float journeyLength;
