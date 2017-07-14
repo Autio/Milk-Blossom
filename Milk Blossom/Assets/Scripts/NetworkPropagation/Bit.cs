@@ -5,6 +5,7 @@ using UnityEngine;
 public class Bit : MonoBehaviour {
     public int targetID; // sole life purpose of the bit is to reach this
     GameObject NetworkCreator;
+    float deathDelay = 0.2f;
     private void Start()
     {
         NetworkCreator = GameObject.Find("Main Camera");
@@ -13,13 +14,13 @@ public class Bit : MonoBehaviour {
     private void OnTriggerEnter2D(Collider2D collision)
     {
         Debug.Log("Colliding");
-        if(collision.tag == "Node")
+        if(collision.transform.tag == "Node")
         {
             Debug.Log("Colliding With Node");
-            if(NetworkCreator.GetComponent<NetworkCreator>().CheckNode(targetID))
+            if(NetworkCreator.GetComponent<NetworkCreator>().CheckNode(targetID, collision.transform))
             {
-
-                Destroy(this.gameObject);
+                Debug.Log("Destroying bit");
+                Destroy(this.gameObject, deathDelay);
             }
         }
     }

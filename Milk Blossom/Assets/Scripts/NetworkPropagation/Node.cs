@@ -14,7 +14,7 @@ public class Node : MonoBehaviour {
     public bool spawner = false;
     float rate = 0.2f;
     float counter;
-
+    float startCountdown = 1.0f;
     void Start()
     {
         rate = Random.Range(0.3f, 2.0f);
@@ -23,26 +23,33 @@ public class Node : MonoBehaviour {
     }
     void Update()
     {
-        if (spawner)
+        // Don't allow immediately
+        if (startCountdown < 0)
         {
-            counter -= Time.deltaTime;
-            if (counter < 0)
+            if (spawner)
             {
-                Debug.Log("Spawning at " + Time.timeSinceLevelLoad);
-                counter = rate;
-                SpawnBit(10.0f);
+                counter -= Time.deltaTime;
+                if (counter < 0)
+                {
+                    Debug.Log("Spawning at " + Time.timeSinceLevelLoad);
+                    counter = rate;
+                    SpawnBit(10.0f);
+                }
             }
+        } else
+        {
+            startCountdown -= Time.deltaTime;
         }
 
     }
 
     void SpawnBit(float speed)
     {
-        Node neighbour = null;
+        Node neighbourNode = null;
         // create a new bit and send it to a neighbour
 
         // select neighbour
-        Node neighbourNode = neighbours[Random.Range(0, neighbours.Count)];
+        neighbourNode = neighbours[Random.Range(0, neighbours.Count)];
 
         // create bit
         GameObject bit = (GameObject)Instantiate(bitObject, transform.position, Quaternion.identity);
@@ -62,7 +69,7 @@ public class Node : MonoBehaviour {
         load -= 1;
 
         // increment load there, needs to happen on arrival
-        neighbour.load += 1;
+        neighbourNode.load += 1;
     }
 
 

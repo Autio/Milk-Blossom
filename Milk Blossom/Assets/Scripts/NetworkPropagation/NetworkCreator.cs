@@ -111,15 +111,21 @@ public class NetworkCreator : MonoBehaviour {
         }
     }
 
-    public bool CheckNode(int id)
+    public bool CheckNode(int id, Transform t)
     {
+        int nodeId = -1;
         foreach(Node n in nodes)
         {
-            if(n.id == id)
+            if(n.nodeObject.transform == t)
             {
-                return true;
+                nodeId = n.id;
             }
         }
+        if(nodeId == id)
+        {
+            return true;
+        }
+        
         return false;
     }
 }
