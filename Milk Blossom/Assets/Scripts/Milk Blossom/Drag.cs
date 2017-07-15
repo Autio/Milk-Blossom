@@ -85,30 +85,19 @@ public class Drag : ControlManager {
         touch = true;
         sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
 
-        if (touch)
+        if (GameManager.Instance.currentState == GameManager.states.live)
         {
-            try
-            {
-                if (GameManager.Instance.currentState == GameManager.states.live)
-                {
 
-                    // only allow dragging for the active player. 
-                    if (this.enabled)
-                    {
-                        Vector3 pos;
-                        pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).x, Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).y, transform.position.z);
-                        transform.position = pos;
-                    }
-                }
-            }
-            catch
+            // only allow dragging for the active player. 
+            if (this.enabled)
             {
-
+                Vector3 pos;
+                pos = new Vector3(Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).x, Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position).y, transform.position.z);
+                transform.position = pos;
             }
         }
+         
     }
-
-
 
     void OnFirstTouchEnded()
     {
@@ -135,7 +124,6 @@ public class Drag : ControlManager {
     }
 
     // GENERAL
-
     void Update()
     {
         if(currentState == dragStates.returning)
@@ -169,8 +157,6 @@ public class Drag : ControlManager {
                 GameController.MakeMove(sourceTileIndex, targetTileIndex);
             }
         }
-
-
     }
 
     bool CheckMove()
@@ -194,15 +180,14 @@ public class Drag : ControlManager {
                 // Try action on the basis of the index
                 if (GameController.CheckMove(i))
                 {
+                    Debug.Log("Checking move validity");
                     return true;
                 } else
                 {
                     return false;
                 }
-
             }
         }
             return false;
     }
-
 }

@@ -78,7 +78,7 @@ public class hexGrid  {
 
                 }
                 tileList[t].tileObject.transform.parent = GameObject.Find("HexGrid").transform;
-                tileList[t].tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
+               // tileList[t].tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
                 yield return new WaitForSeconds(standardDelay);
             }
 
