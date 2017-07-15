@@ -12,6 +12,7 @@ public class ControlManager : MonoBehaviour {
             Debug.Log("Touching");
             if(collider == Physics2D.OverlapPoint(Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position)))
             {
+                Debug.Log("Touching collider");
                 switch (Input.GetTouch(0).phase)
                 {
                     case TouchPhase.Began:
