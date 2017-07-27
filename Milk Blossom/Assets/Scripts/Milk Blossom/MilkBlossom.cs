@@ -264,8 +264,8 @@ public class MilkBlossom : MonoBehaviour
 
         StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
 
-        // once game is setup, set it to live
-        StartCoroutine(switchState(GameManager.states.live, 3.4f));
+        // once game is setup, set it to PLACING
+        StartCoroutine(switchState(GameManager.states.placing, 3.4f));
 
         // set player amounts
         for (int i = 0; i < playerCount; i++)
@@ -323,8 +323,12 @@ public class MilkBlossom : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 
         }
+        if (GameManager.Instance.currentState == GameManager.states.placing)
+        {
+            Placing();
+        }
 
-        if (GameManager.Instance.currentState == GameManager.states.live)
+          if (GameManager.Instance.currentState == GameManager.states.live)
         {
             if(firstTurn)
             {
@@ -502,6 +506,21 @@ public class MilkBlossom : MonoBehaviour
         }
     }
 
+    void Placing()
+    {
+        // Allow placement of units by dragging from the side onto single piece tiles
+        // In player order: 1st, 2nd, 3rd etc. Last one gets to place two
+        
+        // Allow draggability
+        
+
+        // Highlight valid placement tiles
+        AllAllowedPlacementsHighlighter();
+
+        // AI Placement
+                        
+    }
+
     // if switching to player, check if any valid moves are available
     public bool ValidMoves(player p)
     {
@@ -555,6 +574,18 @@ public class MilkBlossom : MonoBehaviour
 
         }
 
+    }
+
+    void AllAllowedPlacementsHighlighter()
+    {
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+            if (t.GetOccupied() == false && t.points == 1)
+            {
+                t.SetHighlight(true, highlightColorList[1]);
+            }
+        }
     }
 
     void AllAllowedMovesHighlighter(tile sourceTile)

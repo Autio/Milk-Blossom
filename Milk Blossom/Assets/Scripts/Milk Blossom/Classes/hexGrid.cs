@@ -14,6 +14,7 @@ public class hexGrid  {
     public int AIPlayerCount;
     public GameObject playerObj;
     public GameObject[] pointsObjects;
+    public bool autoAllocate = false;
 
     private float offsetX, offsetY;
     private float standardDelay = 0.01f;
@@ -86,8 +87,15 @@ public class hexGrid  {
         // 2: Is this the correct place? 
             AllocatePoints(tileList);
             yield return new WaitForSeconds(0.8f);
-            AllocatePlayers(playerObj, tileList, playerList);
 
+        // Players should be allocated manually, but if not you can also randomly allocate them:
+        if (autoAllocate)
+        {
+            AutoAllocatePlayers(playerObj, tileList, playerList);
+        } else
+        {
+            CreatePlayers(playerObj, playerList, playerCount);
+        }
             // Set starting player 
             // 2: This shouldn't always be the human player, should it?
             // activeTile = SelectPlayer(0); NEED TO SET ACTIVE TILE
@@ -147,7 +155,48 @@ public class hexGrid  {
                 }
             }
         }
-    public void AllocatePlayers(GameObject playerObject, List<tile> tileList = null, List<player> playerList = null)
+
+    // Instantiate player on screen
+    void CreatePlayers(GameObject playerObject, List<player> playerList = null, int playerCount = 1)
+    {
+        // Location of player token should be in a preset array
+        // relative to the screen edge
+        float xBuffer = 10.0f;
+        float xPos = Screen.width - xBuffer;
+
+        for (int i = 0; i < playerCount; i++)
+        {
+            int p = i + 1;
+            // Should be created at the side from where it can be dragged into play
+            GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(xPos, Screen.height - (i * 20), -0.5f), Quaternion.identity);
+            // set player text
+            newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (i+1).ToString();
+            player pl = new player();
+            playerList.Add(pl);
+            pl.playerNumber = p;
+            pl.playerGameObject = newPlayer;
+
+            if (playerCount - p < AIPlayerCount)
+            {
+                pl.SetAI(true);
+                Debug.Log("Player " + p.ToString() + " set to AI");
+            }
+
+            // first player always a human? Should be randomised
+            if (p == 1)
+            {
+                if (!pl.GetAI())
+                {
+
+                    pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
+                }
+            }
+        }
+        
+    }
+
+    // Automatic allocation
+    public void AutoAllocatePlayers(GameObject playerObject, List<tile> tileList = null, List<player> playerList = null)
         {
             // legitimate tiles are the ones with one point only
             List<tile> validAllocationTiles = new List<tile>();
