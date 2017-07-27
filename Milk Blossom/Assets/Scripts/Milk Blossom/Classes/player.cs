@@ -5,7 +5,8 @@ using UnityEngine;
 public class player : moveablePiece {
 
     [Range(1, 4)]
-    public int playerNumber; // Number, not index
+    public int playerNumber; // Which player does this unit belong to? Number, not index
+    public int unitNumber; // Each player can have multiple units
     bool AI = false;
     bool alive = true;
     Vector3 cubePosition;

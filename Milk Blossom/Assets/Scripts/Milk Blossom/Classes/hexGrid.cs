@@ -15,6 +15,8 @@ public class hexGrid  {
     public GameObject playerObj;
     public GameObject[] pointsObjects;
     public bool autoAllocate = false;
+    public int unitCount = 2; // how many units does each player get? 
+
 
     private float offsetX, offsetY;
     private float standardDelay = 0.01f;
@@ -94,7 +96,7 @@ public class hexGrid  {
             AutoAllocatePlayers(playerObj, tileList, playerList);
         } else
         {
-            CreatePlayers(playerObj, playerList, playerCount);
+            CreatePlayers(playerObj, playerList, playerCount, unitCount);
         }
             // Set starting player 
             // 2: This shouldn't always be the human player, should it?
@@ -157,23 +159,24 @@ public class hexGrid  {
         }
 
     // Instantiate player on screen
-    void CreatePlayers(GameObject playerObject, List<player> playerList = null, int playerCount = 1)
+    void CreatePlayers(GameObject playerObject, List<player> playerList = null, int playerCount = 1, int unitCount = 2)
     {
         // Location of player token should be in a preset array
         // relative to the screen edge
-        float xBuffer = 10.0f;
-        float xPos = Screen.width - xBuffer;
+        float yBuffer = 0.5f;
+        
+        GameObject playerAnchor = GameObject.Find("PlayerAnchor");
 
         for (int i = 0; i < playerCount; i++)
         {
             int p = i + 1;
             // Should be created at the side from where it can be dragged into play
-            GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(xPos, Screen.height - (i * 20), -0.5f), Quaternion.identity);
+            GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(playerAnchor.transform.position.x, playerAnchor.transform.position.y - i * yBuffer, -0.5f), Quaternion.identity);
             // set player text
             newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (i+1).ToString();
             player pl = new player();
             playerList.Add(pl);
-            pl.playerNumber = p;
+            pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
             pl.playerGameObject = newPlayer;
 
             if (playerCount - p < AIPlayerCount)
