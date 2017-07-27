@@ -299,8 +299,16 @@ public class MilkBlossom : MonoBehaviour
 
         }
 
-        Debug.Log("Switced to " + s);
-
+        Debug.Log("Switched to " + s);
+        // Display current state on top text if it's active
+        try
+        {
+            GameObject.Find("TopNotice").GetComponent<Text>().text = s.ToString();
+        }
+        catch
+        {
+            Debug.Log("");
+        }
     }
 
     // Update is called once per frame
@@ -475,6 +483,9 @@ public class MilkBlossom : MonoBehaviour
 
         if (GameManager.Instance.currentState == GameManager.states.ending)
         {
+            // Include the final tiles for each player here
+
+
             int hiPlayer = 0;
             int hiScore = 0;
             for (int i = 0; i < playerCount; i++)

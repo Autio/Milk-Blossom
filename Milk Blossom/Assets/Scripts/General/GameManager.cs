@@ -8,7 +8,7 @@ public class GameManager : Singleton<GameManager>
     protected GameManager() { } // guarantees this will only be a singleton because you can't use a constructor
 
     // GLOBAL VARIABLES
-    public enum states { starting, moving, live, ending, paused }
+    public enum states { starting, placing, moving, live, ending, paused }
     public states currentState = states.starting;
     public enum controlOptions { keyboard, mouse, touch };
     public controlOptions[] activeControlOptions = new controlOptions[3];

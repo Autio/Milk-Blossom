@@ -16,7 +16,7 @@ public class hexGrid  {
     public GameObject[] pointsObjects;
 
     private float offsetX, offsetY;
-    private float standardDelay = 0.02f;
+    private float standardDelay = 0.01f;
     private string superSecretMessage = "Videogames Rot Your Brains Videogames Rot Your Brains Videogames Rot Your Brains";
     // list of positions
     Vector3 maxBounds = new Vector3(0, 0, 0);
