@@ -42,7 +42,7 @@ public class Drag : ControlManager {
         if (!touch)
         {
             // Can only happen if the game is in Live mode
-            if (GameManager.Instance.currentState == GameManager.states.live)
+            if (GameManager.Instance.currentState == GameManager.states.live || GameManager.Instance.currentState == GameManager.states.placing)
             {
 
                 // only allow dragging for the active player. 
@@ -85,7 +85,7 @@ public class Drag : ControlManager {
         touch = true;
         sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
 
-        if (GameManager.Instance.currentState == GameManager.states.live)
+        if (GameManager.Instance.currentState == GameManager.states.live || GameManager.Instance.currentState == GameManager.states.placing)
         {
 
             // only allow dragging for the active player. 
@@ -118,6 +118,8 @@ public class Drag : ControlManager {
             {
                 currentState = dragStates.returning;
             }
+
+            // Different logic for initial placement?
 
         }
         touch = false;

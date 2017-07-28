@@ -169,29 +169,37 @@ public class hexGrid  {
 
         for (int i = 0; i < playerCount; i++)
         {
-            int p = i + 1;
-            // Should be created at the side from where it can be dragged into play
-            GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(playerAnchor.transform.position.x, playerAnchor.transform.position.y - i * yBuffer, -0.5f), Quaternion.identity);
-            // set player text
-            newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (i+1).ToString();
-            player pl = new player();
-            playerList.Add(pl);
-            pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
-            pl.playerGameObject = newPlayer;
-
-            if (playerCount - p < AIPlayerCount)
+            for (int j = 0; j < unitCount; j++)
             {
-                pl.SetAI(true);
-                Debug.Log("Player " + p.ToString() + " set to AI");
-            }
+                int p = i + 1;
+                // Should be created at the side from where it can be dragged into play
+                GameObject newPlayer = 
+                    (GameObject)UnityEngine.MonoBehaviour.Instantiate
+                    (playerObject, new Vector3(playerAnchor.transform.position.x, 
+                    playerAnchor.transform.position.y - i - j * yBuffer, -0.5f), Quaternion.identity);
 
-            // first player always a human? Should be randomised
-            if (p == 1)
-            {
-                if (!pl.GetAI())
+                // set player text
+                newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (p).ToString() + "_" + (j+1).ToString();
+                player pl = new player();
+                playerList.Add(pl);
+                pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
+                pl.unitNumber = j + 1;
+                pl.playerGameObject = newPlayer;
+
+                if (playerCount - p < AIPlayerCount)
                 {
+                    pl.SetAI(true);
+                    Debug.Log("Player " + p.ToString() + " set to AI");
+                }
 
-                    pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
+                // first player always a human? Should be randomised
+                if (p == 1)
+                {
+                    if (!pl.GetAI())
+                    {
+
+                        pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
+                    }
                 }
             }
         }
