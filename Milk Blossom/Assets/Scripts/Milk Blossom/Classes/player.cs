@@ -7,6 +7,7 @@ public class player : moveablePiece {
     [Range(1, 4)]
     public int playerNumber; // Which player does this unit belong to? Number, not index
     public int unitNumber; // Each player can have multiple units
+    bool placed = false;
     bool AI = false;
     bool alive = true;
     Vector3 cubePosition;
@@ -31,6 +32,15 @@ public class player : moveablePiece {
     public bool GetAlive()
     {
         return alive;
+    }
+
+    public void SetPlaced(bool t)
+    {
+        placed = t;
+    }
+    public bool GetPlaced()
+    {
+        return placed;
     }
 
     public void DeathThroes()

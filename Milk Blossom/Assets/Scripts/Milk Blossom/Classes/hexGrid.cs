@@ -181,7 +181,7 @@ public class hexGrid  {
                 // set player text
                 newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (p).ToString() + "_" + (j+1).ToString();
                 player pl = new player();
-                playerList.Add(pl);
+                playerList.Add(pl); // This means that the playerlist does not map one-to-one between players and player units. i.e. the 2nd entry can still be for player 1
                 pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
                 pl.unitNumber = j + 1;
                 pl.playerGameObject = newPlayer;

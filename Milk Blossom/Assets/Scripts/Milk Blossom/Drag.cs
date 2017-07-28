@@ -20,6 +20,7 @@ public class Drag : ControlManager {
     int targetTileIndex;
     bool touch;
 
+
     void Start()
     {
         touch = false;
@@ -34,6 +35,7 @@ public class Drag : ControlManager {
         if (!touch)
         {
             sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
+
         }
     }
 
@@ -61,19 +63,23 @@ public class Drag : ControlManager {
         Debug.Log("Mouse drag ended");
         if (!touch)
         {
-            // check whether legitimate or not
-            startPos = transform.position;
-            startTime = Time.time;
-            journeyLength = Vector3.Distance(transform.position, transform.parent.position);
-            //        transform.position = transform.parent.position;
-            currentState = dragStates.returning;
-            if (CheckMove())
+            // Move during gameplay or placement
+            if (GameManager.Instance.currentState == GameManager.states.live || GameManager.Instance.currentState == GameManager.states.placing)
             {
-                currentState = dragStates.movingToTarget;
-            }
-            else
-            {
+                // check whether legitimate or not
+                startPos = transform.position;
+                startTime = Time.time;
+                journeyLength = Vector3.Distance(transform.position, transform.parent.position);
+                //        transform.position = transform.parent.position;
                 currentState = dragStates.returning;
+                if (CheckMove())
+                {
+                    currentState = dragStates.movingToTarget;
+                }
+                else
+                {
+                    currentState = dragStates.returning;
+                }
             }
         }
     }
@@ -153,10 +159,23 @@ public class Drag : ControlManager {
                 
                 currentState = dragStates.idle;
 
-                targetTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(targetTile.transform.position.x, targetTile.transform.position.y), GameManager.tileList);
-              
-                // The move is complete and the appropriate inc
-                GameController.MakeMove(sourceTileIndex, targetTileIndex);
+
+                // If this is the deployment phase, only deploy the player and increment accordingly
+                if (GameManager.Instance.currentState == GameManager.states.placing)
+                {
+                    // What is the player unit index? 
+                    GameController.MakePlacement(targetTileIndex, this.gameObject.transform.parent.gameObject);
+                }
+
+                // Otherwise the move is complete and the appropriate inc
+                if (GameManager.Instance.currentState == GameManager.states.live)
+                {
+                    targetTileIndex = GameController.liveHexGrid.GetTileIndexByPos(
+                        new Vector2(targetTile.transform.position.x, targetTile.transform.position.y), 
+                        GameManager.tileList);
+                    GameController.MakeMove(sourceTileIndex, targetTileIndex);
+                }
+
             }
         }
     }

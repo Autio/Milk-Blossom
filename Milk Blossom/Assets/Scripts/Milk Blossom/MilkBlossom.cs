@@ -102,9 +102,11 @@ public class MilkBlossom : MonoBehaviour
     public GameObject playerObject;
     [Range(1, 4)]
     public int playerCount = 2;
+    public int unitCount = 2;
     public int AIPlayerCount = 2;
     static List<player> playerList = new List<player>();
     public int activePlayerIndex = 0;
+    public int activeUnitIndex = 0;
 
     // ART & VISUAL
     static Sprite[] tileSprites;
@@ -171,6 +173,43 @@ public class MilkBlossom : MonoBehaviour
             }
         }
     }
+
+    void SetPlayerPlacementDraggability(int unitNumber)
+    {
+        foreach (player p in playerList)
+        {
+            if (p.playerNumber != (activePlayerIndex + 1)) // +1 is correct
+            {
+                //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.grey;
+
+            }
+            else
+            {
+                if (p.GetAI())
+                {
+                    //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
+                }
+                else
+                {
+                    if (p.unitNumber == unitNumber)
+                    {
+                        //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
+                        // Highlight the sprite
+                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.blue;
+                    } else
+
+                    {
+                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
+                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.grey;
+                    }
+                }
+            }
+        }
+    }
     
     void IncrementActivePlayer()
     {
@@ -185,7 +224,7 @@ public class MilkBlossom : MonoBehaviour
         SetPlayerDraggability();
 
         // Show all possible moves when dragging & dropping
-        AllAllowedMovesHighlighter(activeTile);
+        AllAllowedMoves(activeTile);
         
 
         if (!ValidMoves(playerList[activePlayerIndex]))
@@ -222,6 +261,24 @@ public class MilkBlossom : MonoBehaviour
         */
     }
 
+    void IncrementPlacementPlayer()
+    {
+        activePlayerIndex++;
+        if (activePlayerIndex >= playerCount)
+        {
+            activePlayerIndex = 0;
+            activeUnitIndex += 1;
+
+        }
+        if (activeUnitIndex >= unitCount)
+        {
+            Debug.Log("Active unit index reached unit count maximum");
+            // This should end the placement phase
+            switchState(GameManager.states.live, 0.3f);
+            Debug.Log("Switched to live");
+        }
+    }
+
     private bool CheckPlayersAlive()
     {
         for (int p = 0; p < playerCount; p++)
@@ -247,7 +304,7 @@ public class MilkBlossom : MonoBehaviour
     IEnumerator Wait(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
-        AllAllowedMovesHighlighter(activeTile);
+        AllAllowedMoves(activeTile);
     }
 
     void InitGame()
@@ -294,6 +351,7 @@ public class MilkBlossom : MonoBehaviour
         if(GameManager.Instance.currentState == GameManager.states.live)
         {
             // Set active tile based on player
+            // Need to update to take into acconut multi-units
             activeTile = SelectPlayer(0);
             SetPlayerDraggability();
 
@@ -332,7 +390,7 @@ public class MilkBlossom : MonoBehaviour
         {
             if(firstTurn)
             {
-                AllAllowedMovesHighlighter(activeTile);
+                AllAllowedMoves(activeTile);
                 firstTurn = false;
             }
             // TURN TIMER
@@ -509,16 +567,23 @@ public class MilkBlossom : MonoBehaviour
     void Placing()
     {
         // Allow placement of units by dragging from the side onto single piece tiles
-        // In player order: 1st, 2nd, 3rd etc. Last one gets to place two
-        
-        // Allow draggability
-        
+        // In player order: 1st, 2nd, 3rd etc then back to 1st
+        // Set valid placement tiles
+        AllAllowedPlacements();
 
-        // Highlight valid placement tiles
-        AllAllowedPlacementsHighlighter();
+        // Allow draggability of the correct one only
+        // unit index should increment when last player flips to first one
+        SetPlayerPlacementDraggability(activeUnitIndex + 1);   
+
+        // Manual placement
+
 
         // AI Placement
-                        
+                
+        
+        // Check what should happen next:
+        // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
+        // Only the remaining unit(s) on the sidelines can be placed        
     }
 
     // if switching to player, check if any valid moves are available
@@ -576,7 +641,7 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-    void AllAllowedPlacementsHighlighter()
+    void AllAllowedPlacements()
     {
         foreach (tile t in GameManager.tileList)
         {
@@ -584,11 +649,16 @@ public class MilkBlossom : MonoBehaviour
             if (t.GetOccupied() == false && t.points == 1)
             {
                 t.SetHighlight(true, highlightColorList[1]);
+                t.SetValidMove(true);
+            }
+            else
+            {
+                t.SetValidMove(false);
             }
         }
     }
 
-    void AllAllowedMovesHighlighter(tile sourceTile)
+    void AllAllowedMoves(tile sourceTile)
     {
         // Unhighlight all tiles
         foreach (tile t in GameManager.tileList)
@@ -660,7 +730,7 @@ public class MilkBlossom : MonoBehaviour
 
         // there should be a way to know from the cubic coordinates whether the tile is on a line
         // Refresh the highlighted tiles for all in range
-        AllAllowedMovesHighlighter(activeTile);
+        AllAllowedMoves(activeTile);
 
         // first, unhighlight all tiles
         foreach (tile t in GameManager.tileList)
@@ -778,7 +848,49 @@ public class MilkBlossom : MonoBehaviour
         }
                    
     }
+    public bool CheckPlacement(int targetTileIndex)
+    {
+        // This is dependent on the board valid moves being updated appropriately for the active player
+        tile targetTile = GameManager.tileList[targetTileIndex];
+        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
 
+    }
+    public void MakePlacement(int targetTileIndex = 0, GameObject playerGameObject = null)
+    {
+        int playerUnitIndex = -1;
+        // Just make sure the correct playerUnitIndex is passed through
+        foreach(player pl in playerList)
+        {
+            if(pl.playerGameObject == playerGameObject)
+            {
+                playerUnitIndex = playerList.IndexOf(pl);
+                Debug.Log("Player unit being placed " + pl.playerNumber.ToString() + "_" + pl.unitNumber.ToString());
+            }
+        }
+        player p;
+
+        if (playerUnitIndex == 0)
+        {
+            p = playerList[activePlayerIndex];
+        }
+        else
+        {
+            p = playerList[playerUnitIndex];
+        }
+
+        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
+        p.playerTile = GameManager.tileList[targetTileIndex];
+
+        // Each player places one unit and then it loops around to the first until all are placed
+        IncrementPlacementPlayer();
+    }
     public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
     {
         player p;
@@ -844,7 +956,7 @@ public class MilkBlossom : MonoBehaviour
         }
         unit.playerGameObject.transform.position = targetPos;
 
-        switchState(GameManager.states.live); ;
+        switchState(GameManager.states.live);
         // Only once object has moved, do we increment to the next player
         yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();

@@ -41,8 +41,6 @@ public class tile {
                 }
             }
         }
-
-
         public bool GetHighlight()
         {
             return highlighted;
