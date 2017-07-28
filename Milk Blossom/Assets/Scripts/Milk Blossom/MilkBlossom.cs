@@ -232,7 +232,8 @@ public class MilkBlossom : MonoBehaviour
         // One player at a time selects one of their units from the board and makes a legitimate move
         // Points are counted from beneath
 
-        ClearHighlights();
+        // ClearHighlights();
+        // Only highlight player unit tiles when the unit isn't being dragged
         HighlightPlayerUnitTiles(activePlayerIndex);
         /*
         turnCooldown -= Time.deltaTime;
@@ -290,7 +291,6 @@ public class MilkBlossom : MonoBehaviour
     void Ending()
     {
         // Include the final tiles for each player here
-
         // Grab high score
         int hiPlayer = 0;
         int hiScore = 0;
@@ -303,11 +303,10 @@ public class MilkBlossom : MonoBehaviour
             }
 
         }
-
         endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
     }
-    // MAIN GAME FLOW - END
 
+    // MAIN GAME FLOW - END
     // PLACEMENT AND MOVEMENT FUNCTIONS
     public void SetPlayerDraggability()
     {
@@ -1084,7 +1083,7 @@ public class MilkBlossom : MonoBehaviour
         Debug.Log("Highlighting player unit tiles");
         foreach (tile t in GameManager.tileList)
         {
-            t.SetHighlight(false, highlightColorList[0]);
+            //t.SetHighlight(false, highlightColorList[0]);
             foreach (player p in playerList)
             {
                 if (p.playerNumber == (activePlayerIndex + 1))
@@ -1135,7 +1134,7 @@ public class MilkBlossom : MonoBehaviour
 
         return false;
     }
-    void AllAllowedMoves(tile sourceTile)
+    public void AllAllowedMoves(tile sourceTile)
     {
         // Unhighlight all tiles
         foreach (tile t in GameManager.tileList)
@@ -1144,7 +1143,7 @@ public class MilkBlossom : MonoBehaviour
         }
         try
         {
-            sourceTile.SetHighlight(true, highlightColorList[0]);
+            sourceTile.SetHighlight(true, highlightColorList[1]);
         }
         catch
         {
@@ -1153,6 +1152,7 @@ public class MilkBlossom : MonoBehaviour
         }
         try
         {
+            Debug.Log("Highlighting directions");
             for (int d = 0; d < 6; d++)
             {
                 bool directionBlocked = false;
@@ -1203,7 +1203,6 @@ public class MilkBlossom : MonoBehaviour
     {
         // The 5 is linked to the board size
         Mathf.Clamp((float)direction, 0, 5);
-
 
         // there should be a way to know from the cubic coordinates whether the tile is on a line
         // Refresh the highlighted tiles for all in range
