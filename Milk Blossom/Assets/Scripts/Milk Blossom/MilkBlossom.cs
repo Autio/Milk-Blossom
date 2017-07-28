@@ -137,7 +137,7 @@ public class MilkBlossom : MonoBehaviour
         
         // Only if we need timed turns
         timerBar = GameObject.Find("TimerBar");
-
+   
         // Direction mapping
         directions[0] = new Vector3(+1, -1, 0);
         directions[1] = new Vector3(+1, 0, -1);
@@ -147,12 +147,11 @@ public class MilkBlossom : MonoBehaviour
         directions[5] = new Vector3(0, -1, +1);
 
         InitGame();
-
     }
 
     void InitGame()
     {
-        // create grid, allocate points and allocate players
+        // create grid class, allocate points and allocate players
         liveHexGrid = new hexGrid();
         liveHexGrid.SetCoords(hexGridx, hexGridy);
         liveHexGrid.radius = hexRadius;
@@ -162,6 +161,7 @@ public class MilkBlossom : MonoBehaviour
         liveHexGrid.playerObj = playerObject;
         liveHexGrid.pointsObjects = pointsObjects;
 
+        // Instantiate grid and spawn players to the side of the board
         StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
 
         // once game is setup, the placement phase begins
@@ -181,30 +181,168 @@ public class MilkBlossom : MonoBehaviour
         }
     }
 
+    // Update is called once per frame
+    void Update()
+    {
+        // Debug.Log("active player " + activePlayer);
+        // Debug.Log("current state " + GameManager.Instance.currentState);
+        // RESET GAME
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        if (GameManager.Instance.currentState == GameManager.states.placing)
+        {
+            Placing();
+        }
+        if (GameManager.Instance.currentState == GameManager.states.live)
+        {
+            Live();
+        }
+        if (GameManager.Instance.currentState == GameManager.states.ending)
+        {
+            Ending();
+        }
+    }
+
+    void Placing()
+    {
+        // Allow placement of units by dragging from the side onto single piece tiles
+        // In player order: 1st, 2nd, 3rd etc then back to 1st
+        // Set valid placement tiles on each update cycle
+        AllAllowedPlacements();
+
+        // Allow draggability of the correct one only
+        // unit index should increment when last player flips to first one
+        // The dragging itself happens with the Drag class
+        SetPlayerPlacementDraggability(activeUnitIndex + 1);   
+
+        // Manual placement
+
+        // AI Placement
+                        
+        // Check what should happen next:
+        // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
+        // Only the remaining unit(s) on the sidelines can be placed      
+    }
+
+    void Live()
+    {
+        // Main game loop
+        // One player at a time selects one of their units from the board and makes a legitimate move
+        // Points are counted from beneath
+
+        ClearHighlights();
+        HighlightPlayerUnitTiles(activePlayerIndex);
+        /*
+        turnCooldown -= Time.deltaTime;
+        if (turnCooldown < 0)
+        {
+            // check if it's AI's turn to go
+            if (playerList[activePlayerIndex].GetAI())
+            {
+                turnCooldown = 0.75f;
+                AIMove(playerList[activePlayerIndex]);
+
+            }
+            else
+            {
+                turnCooldown = 0.03f;
+            }
+        }
+        */
+
+        /*if(firstTurn)
+        {
+            // Should highlight the units of the active player's units
+            // And when that unit is picked up, all the valid move tiles should be highlighted
+            HighlightPlayerUnitTiles(activePlayerIndex);
+            AllAllowedMoves(activeTile);
+            firstTurn = false;
+        }*/
+
+        // TURN TIMER
+        // only count for human players
+        if (timed)
+        {
+            if (!playerList[activePlayerIndex].GetAI())
+            {
+                turnTimeCounter += Time.deltaTime;
+                if (turnTimeCounter > turnTimeLimit)
+                {
+                    // Indicate to player that time is up
+
+                    // FORCE MOVE FROM PLAYER
+                    // (call AI move)
+
+                    // Increment player turn
+                    turnTimeCounter = 0;
+
+                    IncrementActivePlayer();
+                    ClearHighlights();
+
+                }
+
+            }
+        }
+    }
+
+    void Ending()
+    {
+        // Include the final tiles for each player here
+
+        // Grab high score
+        int hiPlayer = 0;
+        int hiScore = 0;
+        for (int i = 0; i < playerCount; i++)
+        {
+            if (playerList[i].GetPoints() > hiScore)
+            {
+                hiPlayer = i + 1;
+                hiScore = playerList[i].GetPoints();
+            }
+
+        }
+
+        endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
+    }
+    // MAIN GAME FLOW - END
+
+    // PLACEMENT AND MOVEMENT FUNCTIONS
     public void SetPlayerDraggability()
     {
         foreach (player p in playerList)
         {
             if (p.playerNumber != (activePlayerIndex + 1)) // +1 is correct
             {
-             //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                 p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
             }
             else
             {
                 if (p.GetAI())
                 {
-               //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
+                    //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
                 }
                 else
                 {
-                 //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
-                   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
+                    //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
+                    p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                 }
             }
         }
     }
+
+    void ClearPlayerPlacementDraggability()
+    {
+        foreach (player p in playerList)
+        {
+            p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
+            p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.grey;
+        }
+    }
+
 
     void SetPlayerPlacementDraggability(int unitNumber)
     {
@@ -232,7 +370,8 @@ public class MilkBlossom : MonoBehaviour
                         p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                         // Highlight the sprite
                         p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.blue;
-                    } else
+                    }
+                    else
 
                     {
                         p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
@@ -242,7 +381,7 @@ public class MilkBlossom : MonoBehaviour
             }
         }
     }
-    
+
     void IncrementActivePlayer()
     {
         activePlayerIndex++;
@@ -257,7 +396,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Show all possible moves when dragging & dropping
         AllAllowedMoves(activeTile);
-        
+
 
         if (!ValidMoves(playerList[activePlayerIndex]))
         {
@@ -293,66 +432,190 @@ public class MilkBlossom : MonoBehaviour
         */
     }
 
-
-
-    // Update is called once per frame
-    void Update()
+    static tile SelectPlayer(int playerNumber = 0)
     {
-
-        // Debug.Log("active player " + activePlayer);
-        // Debug.Log("current state " + GameManager.Instance.currentState);
-
-        // RESET GAME
-        if (Input.GetKey(KeyCode.Escape))
+        Debug.Log("player number " + (playerNumber + 1).ToString() + " selected");
+        foreach (player p in playerList)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            Debug.Log(p.playerNumber);
+            if (p.playerNumber == (playerNumber + 1))
+            {
+                Debug.Log("Setting active tile");
+                return p.playerTile;
+            }
+        }
+        return null;
+    }
+
+
+    void IncrementPlacementPlayer()
+    {
+        activePlayerIndex++;
+        if (activePlayerIndex >= playerCount)
+        {
+            activePlayerIndex = 0;
+            activeUnitIndex += 1;
 
         }
-        if (GameManager.Instance.currentState == GameManager.states.placing)
+        if (activeUnitIndex >= unitCount)
         {
-            Placing();
-        }
-
-          if (GameManager.Instance.currentState == GameManager.states.live)
-        {
-            Live();
-        }
-
-        if (GameManager.Instance.currentState == GameManager.states.ending)
-        {
-            Ending();
+            Debug.Log("Active unit index reached unit count maximum");
+            // This should end the placement phase
+            ClearPlayerPlacementDraggability();
+            ClearHighlights();
+            activeUnitIndex = 0;
+            StartCoroutine(switchState(GameManager.states.live, 0.3f));
         }
     }
 
-    void Placing()
+
+    void MakeMove(player p, tile targetTile)
     {
-        // Allow placement of units by dragging from the side onto single piece tiles
-        // In player order: 1st, 2nd, 3rd etc then back to 1st
-        // Set valid placement tiles
-        AllAllowedPlacements();
 
-        // Allow draggability of the correct one only
-        // unit index should increment when last player flips to first one
-        // The dragging itself happens with the Drag class
-        SetPlayerPlacementDraggability(activeUnitIndex + 1);   
+        switchState(GameManager.states.moving, 0.2f);
+        // player makes a move
 
-        // Manual placement
+        // acquire points
+        p.AddPoints(p.playerTile.points);
+
+        // leave current tile
+        liveHexGrid.leaveTile(p.playerTile);
+
+        // move player unit to new tile
+        // switch state to moving
+        Vector3 sourcePos = p.playerGameObject.transform.position;
+        Vector3 targetPos = new Vector3(targetTile.tileObject.transform.position.x, targetTile.tileObject.transform.position.y, p.playerGameObject.transform.position.z);
+        // set player tile as the target tile
+        p.playerTile = targetTile;
+        activeTile = targetTile;
+        liveHexGrid.enterTile(activeTile);
+
+        // update scores
+        UpdateScores();
+        StartCoroutine(moveUnit(sourcePos, targetPos, p));
 
 
-        // AI Placement
-                
-        
-        // Check what should happen next:
-        // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
-        // Only the remaining unit(s) on the sidelines can be placed        
+
+
     }
 
-    void Live()
+    public bool CheckMove(int targetTileIndex)
     {
-        ClearHighlights();
-        HighlightPlayerUnitTiles(activePlayerIndex);
+        // This is dependent on the board valid moves being updated appropriately for the active player
+        tile targetTile = GameManager.tileList[targetTileIndex];
+        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+                   
+    }
+    public bool CheckPlacement(int targetTileIndex)
+    {
+        // This is dependent on the board valid moves being updated appropriately for the active player
+        tile targetTile = GameManager.tileList[targetTileIndex];
+        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
+    public void MakePlacement(int targetTileIndex = 0, GameObject playerGameObject = null)
+    {
+        string s = "";
+        // Just make sure the correct playerUnitIndex is passed through
+        player placementPlayer = null;
+        foreach (player pl in playerList)
+        {
+            if(pl.playerGameObject == playerGameObject)
+            {
+                placementPlayer = pl;
+                s = pl.playerNumber.ToString() + "_" + pl.unitNumber.ToString();
+                Debug.Log("Player unit being placed " + s);
+            }
+        }
+
+        Debug.Log("Placing " + s + " to tile index " + targetTileIndex.ToString());
+        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
+        placementPlayer.playerTile = GameManager.tileList[targetTileIndex];
+
+        // Each player places one unit and then it loops around to the first until all are placed
+        IncrementPlacementPlayer();
+    }
+    public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
+    {
+        player p;
+        if(playerIndex == 0)
+        {
+            p = playerList[activePlayerIndex];
+        } else
+        {
+            p = playerList[playerIndex];
+        }
+    
+        // Acquire points - need
+        // 1) point amount, so need the tile the player is moving away from
+        // 2) Display a popup text with that value and that should happen from the source tile
+        AcquirePoints(GameManager.tileList[sourceTileIndex], p);
+
+        liveHexGrid.leaveTile(GameManager.tileList[sourceTileIndex]);
+        activeTile = GameManager.tileList[targetTileIndex];
+        liveHexGrid.enterTile(activeTile);
+        p.playerTile = GameManager.tileList[targetTileIndex];
+
+        // arrive on new tile (by index)
+        IncrementActivePlayer();
+
+        // update scores
+        UpdateScores();
+
+    }
 
 
+    IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
+    {
+        StartCoroutine(switchState(GameManager.states.moving, 0.0f));
+        Transform wheelChild = unit.playerWheelTransform;
+        Vector2 lookPos = targetPos - sourcePos;
+        Quaternion rotation = Quaternion.LookRotation(Vector3.forward, lookPos);
+        float r = 0;
+        float rStep = (1.0f / Vector3.Angle(lookPos, wheelChild.forward) * Time.fixedDeltaTime * 50);
+
+        while (r < 0.5f)
+        {
+            r += rStep;
+            wheelChild.rotation = Quaternion.Slerp(wheelChild.rotation, rotation, r);
+            yield return new WaitForFixedUpdate();
+        }
+
+        Debug.Log("Rotation complete, now moving");
+
+        float step = (1.0f / (sourcePos - targetPos).magnitude * Time.fixedDeltaTime * 2);
+        float t = 0;
+        while (t < 1.0f)
+        {
+            t += step;
+            unit.playerGameObject.transform.position = Vector3.Lerp(sourcePos, targetPos, t);
+            yield return new WaitForFixedUpdate();
+        }
+        unit.playerGameObject.transform.position = targetPos;
+
+        StartCoroutine(switchState(GameManager.states.live));
+        // Only once object has moved, do we increment to the next player
+        yield return new WaitForSeconds(0.2f);
+        IncrementActivePlayer();
+
+    }
+
+    void KeyboardControls()
+    {
         // CONTROLS
         if (Input.GetKey(KeyCode.H))
         {
@@ -441,285 +704,25 @@ public class MilkBlossom : MonoBehaviour
 
         }
         */
+
         tile targetTile = null;
+
+        if (Input.GetKey(KeyCode.Return))
+        {
+            if (activeTile != targetTile)
+            {
+
+                MakeMove(playerList[activePlayerIndex], targetTile);
+                ClearHighlights();
+
+                // IncrementativePlayer();
+            }
+        }
 
         if (Input.GetKey(KeyCode.T))
         {
             PseudoAIMove(playerList[activePlayerIndex]);
         }
-
-        turnCooldown -= Time.deltaTime;
-        if (turnCooldown < 0)
-        {
-            // check if it's AI's turn to go
-            if (playerList[activePlayerIndex].GetAI())
-            {
-                turnCooldown = 0.75f;
-                AIMove(playerList[activePlayerIndex]);
-
-            }
-            else
-            {
-                turnCooldown = 0.03f;
-
-                //  targetTile = LinearHighlighter(activeTile, currentDir, targetRange);
-            }
-
-
-            if (Input.GetKey(KeyCode.Return))
-            {
-                if (activeTile != targetTile)
-                {
-
-                    MakeMove(playerList[activePlayerIndex], targetTile);
-                    ClearHighlights();
-
-                    // IncrementativePlayer();
-                }
-            }
-
-        }
-
-        /*if(firstTurn)
-        {
-            // Should highlight the units of the active player's units
-            // And when that unit is picked up, all the valid move tiles should be highlighted
-            HighlightPlayerUnitTiles(activePlayerIndex);
-            AllAllowedMoves(activeTile);
-            firstTurn = false;
-        }*/
-        // TURN TIMER
-        // only count for human players
-        if (timed)
-        {
-            if (!playerList[activePlayerIndex].GetAI())
-            {
-                turnTimeCounter += Time.deltaTime;
-                if (turnTimeCounter > turnTimeLimit)
-                {
-                    // Indicate to player that time is up
-
-                    // FORCE MOVE FROM PLAYER
-                    // (call AI move)
-
-                    // Increment player turn
-                    turnTimeCounter = 0;
-
-                    IncrementActivePlayer();
-                    ClearHighlights();
-
-                }
-
-            }
-        }
-    }
-
-    void Ending()
-    {
-        // Include the final tiles for each player here
-        int hiPlayer = 0;
-        int hiScore = 0;
-        for (int i = 0; i < playerCount; i++)
-        {
-            if (playerList[i].GetPoints() > hiScore)
-            {
-                hiPlayer = i + 1;
-                hiScore = playerList[i].GetPoints();
-            }
-
-        }
-
-        endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
-    }
-    // MAIN GAME FLOW - END
-    
-    // PLACEMENT AND MOVEMENT FUNCTIONS
-    static tile SelectPlayer(int playerNumber = 0)
-    {
-        Debug.Log("player number " + (playerNumber + 1).ToString() + " selected");
-        foreach (player p in playerList)
-        {
-            Debug.Log(p.playerNumber);
-            if (p.playerNumber == (playerNumber + 1))
-            {
-                Debug.Log("Setting active tile");
-                return p.playerTile;
-            }
-        }
-        return null;
-    }
-
-
-    void IncrementPlacementPlayer()
-    {
-        activePlayerIndex++;
-        if (activePlayerIndex >= playerCount)
-        {
-            activePlayerIndex = 0;
-            activeUnitIndex += 1;
-
-        }
-        if (activeUnitIndex >= unitCount)
-        {
-            Debug.Log("Active unit index reached unit count maximum");
-            // This should end the placement phase
-            SetPlayerDraggability();
-            StartCoroutine(switchState(GameManager.states.live, 0.3f));
-
-        }
-    }
-
-
-    void MakeMove(player p, tile targetTile)
-    {
-
-        switchState(GameManager.states.moving, 0.2f);
-        // player makes a move
-
-        // acquire points
-        p.AddPoints(p.playerTile.points);
-
-        // leave current tile
-        liveHexGrid.leaveTile(p.playerTile);
-
-        // move player unit to new tile
-        // switch state to moving
-        Vector3 sourcePos = p.playerGameObject.transform.position;
-        Vector3 targetPos = new Vector3(targetTile.tileObject.transform.position.x, targetTile.tileObject.transform.position.y, p.playerGameObject.transform.position.z);
-        // set player tile as the target tile
-        p.playerTile = targetTile;
-        activeTile = targetTile;
-        liveHexGrid.enterTile(activeTile);
-
-        // update scores
-        UpdateScores();
-        StartCoroutine(moveUnit(sourcePos, targetPos, p));
-
-
-
-
-    }
-
-    public bool CheckMove(int targetTileIndex)
-    {
-        // This is dependent on the board valid moves being updated appropriately for the active player
-        tile targetTile = GameManager.tileList[targetTileIndex];
-        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-                   
-    }
-    public bool CheckPlacement(int targetTileIndex)
-    {
-        // This is dependent on the board valid moves being updated appropriately for the active player
-        tile targetTile = GameManager.tileList[targetTileIndex];
-        if (GameManager.tileList[targetTileIndex].GetValidMove()) // should be "IsValid"
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-
-    }
-    public void MakePlacement(int targetTileIndex = 0, GameObject playerGameObject = null)
-    {
-        int playerUnitIndex = -1;
-        // Just make sure the correct playerUnitIndex is passed through
-        foreach(player pl in playerList)
-        {
-            if(pl.playerGameObject == playerGameObject)
-            {
-                playerUnitIndex = playerList.IndexOf(pl);
-                Debug.Log("Player unit being placed " + pl.playerNumber.ToString() + "_" + pl.unitNumber.ToString());
-            }
-        }
-        player p;
-
-        if (playerUnitIndex == 0)
-        {
-            p = playerList[activePlayerIndex];
-        }
-        else
-        {
-            p = playerList[playerUnitIndex];
-        }
-
-        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
-        p.playerTile = GameManager.tileList[targetTileIndex];
-
-        // Each player places one unit and then it loops around to the first until all are placed
-        IncrementPlacementPlayer();
-    }
-    public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
-    {
-        player p;
-        if(playerIndex == 0)
-        {
-            p = playerList[activePlayerIndex];
-        } else
-        {
-            p = playerList[playerIndex];
-        }
-    
-        // Acquire points - need
-        // 1) point amount, so need the tile the player is moving away from
-        // 2) Display a popup text with that value and that should happen from the source tile
-        AcquirePoints(GameManager.tileList[sourceTileIndex], p);
-
-        liveHexGrid.leaveTile(GameManager.tileList[sourceTileIndex]);
-        activeTile = GameManager.tileList[targetTileIndex];
-        liveHexGrid.enterTile(activeTile);
-        p.playerTile = GameManager.tileList[targetTileIndex];
-
-        // arrive on new tile (by index)
-        IncrementActivePlayer();
-
-        // update scores
-        UpdateScores();
-
-    }
-
-
-    IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
-    {
-        StartCoroutine(switchState(GameManager.states.moving, 0.0f));
-        Transform wheelChild = unit.playerWheelTransform;
-        Vector2 lookPos = targetPos - sourcePos;
-        Quaternion rotation = Quaternion.LookRotation(Vector3.forward, lookPos);
-        float r = 0;
-        float rStep = (1.0f / Vector3.Angle(lookPos, wheelChild.forward) * Time.fixedDeltaTime * 50);
-
-        while (r < 0.5f)
-        {
-            r += rStep;
-            wheelChild.rotation = Quaternion.Slerp(wheelChild.rotation, rotation, r);
-            yield return new WaitForFixedUpdate();
-        }
-
-        Debug.Log("Rotation complete, now moving");
-
-        float step = (1.0f / (sourcePos - targetPos).magnitude * Time.fixedDeltaTime * 2);
-        float t = 0;
-        while (t < 1.0f)
-        {
-            t += step;
-            unit.playerGameObject.transform.position = Vector3.Lerp(sourcePos, targetPos, t);
-            yield return new WaitForFixedUpdate();
-        }
-        unit.playerGameObject.transform.position = targetPos;
-
-        StartCoroutine(switchState(GameManager.states.live));
-        // Only once object has moved, do we increment to the next player
-        yield return new WaitForSeconds(0.2f);
-        IncrementActivePlayer();
-
     }
 
     // ------- AI ------- //
@@ -1086,6 +1089,7 @@ public class MilkBlossom : MonoBehaviour
             {
                 if (p.playerNumber == (activePlayerIndex + 1))
                 {
+                    // Why is this playertile not being found?
                     p.playerTile.SetHighlight(true, highlightColorList[1]);
                 }
             }
@@ -1292,7 +1296,7 @@ public class MilkBlossom : MonoBehaviour
         {
             // Set active tile based on player
             // Need to update to take into acconut multi-units
-            activeTile = SelectPlayer(0);
+            activeTile = SelectPlayer(activePlayerIndex);
             SetPlayerDraggability();
 
         }
