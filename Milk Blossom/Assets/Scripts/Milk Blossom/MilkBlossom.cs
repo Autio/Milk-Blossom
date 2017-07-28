@@ -274,8 +274,9 @@ public class MilkBlossom : MonoBehaviour
         {
             Debug.Log("Active unit index reached unit count maximum");
             // This should end the placement phase
-            switchState(GameManager.states.live, 0.3f);
-            Debug.Log("Switched to live");
+            SetPlayerDraggability();
+            StartCoroutine(switchState(GameManager.states.live, 0.3f));
+            
         }
     }
 
@@ -374,7 +375,7 @@ public class MilkBlossom : MonoBehaviour
     {
 
         // Debug.Log("active player " + activePlayer);
-        // Debug.Log("current state " + currentState);
+        // Debug.Log("current state " + GameManager.Instance.currentState);
         // RESET GAME
         if (Input.GetKey(KeyCode.Escape))
         {
@@ -390,6 +391,8 @@ public class MilkBlossom : MonoBehaviour
         {
             if(firstTurn)
             {
+                // Should highlight the units of the active player's units
+                // And when that unit is picked up, all the valid move tiles should be highlighted
                 AllAllowedMoves(activeTile);
                 firstTurn = false;
             }
@@ -930,7 +933,7 @@ public class MilkBlossom : MonoBehaviour
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
     {
-        switchState(GameManager.states.moving, 0.0f);
+        StartCoroutine(switchState(GameManager.states.moving, 0.0f));
         Transform wheelChild = unit.playerWheelTransform;
         Vector2 lookPos = targetPos - sourcePos;
         Quaternion rotation = Quaternion.LookRotation(Vector3.forward, lookPos);
@@ -956,7 +959,7 @@ public class MilkBlossom : MonoBehaviour
         }
         unit.playerGameObject.transform.position = targetPos;
 
-        switchState(GameManager.states.live);
+        StartCoroutine(switchState(GameManager.states.live));
         // Only once object has moved, do we increment to the next player
         yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();
