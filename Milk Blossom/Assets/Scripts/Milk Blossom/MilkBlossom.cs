@@ -114,7 +114,14 @@ public class MilkBlossom : MonoBehaviour
     public Color[] highlightColorsListPublic;
     public GameObject endText;
 
-    // Use this for initialization
+    // LOAD RESOURCES
+    void Awake()
+    {
+        // ART
+        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2");
+    }
+
+    // MAIN GAME FLOW - START ->
     void Start()
     {
         // DEFAULT TO ENGLISH - add menu options for other languages
@@ -142,11 +149,36 @@ public class MilkBlossom : MonoBehaviour
         InitGame();
 
     }
-   
-    void Awake()
+
+    void InitGame()
     {
-        // ART
-        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2");
+        // create grid, allocate points and allocate players
+        liveHexGrid = new hexGrid();
+        liveHexGrid.SetCoords(hexGridx, hexGridy);
+        liveHexGrid.radius = hexRadius;
+        liveHexGrid.useAsInnerCircleRadius = useAsInnerCircleRadius;
+        liveHexGrid.playerCount = playerCount;
+        liveHexGrid.AIPlayerCount = AIPlayerCount;
+        liveHexGrid.playerObj = playerObject;
+        liveHexGrid.pointsObjects = pointsObjects;
+
+        StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
+
+        // once game is setup, the placement phase begins
+        StartCoroutine(switchState(GameManager.states.placing, 3.4f));
+
+        // set player amounts
+        for (int i = 0; i < playerCount; i++)
+        {
+            if (i < 2)
+            {
+                scoreObjects[i].transform.GetComponent<Text>().text = "P" + (i + 1).ToString() + "\n" + "0";
+            }
+            else
+            {
+                scoreObjects[i].transform.GetComponent<Text>().text = "0\n" + "P" + (i + 1).ToString();
+            }
+        }
     }
 
     public void SetPlayerDraggability()
@@ -261,114 +293,7 @@ public class MilkBlossom : MonoBehaviour
         */
     }
 
-    void IncrementPlacementPlayer()
-    {
-        activePlayerIndex++;
-        if (activePlayerIndex >= playerCount)
-        {
-            activePlayerIndex = 0;
-            activeUnitIndex += 1;
 
-        }
-        if (activeUnitIndex >= unitCount)
-        {
-            Debug.Log("Active unit index reached unit count maximum");
-            // This should end the placement phase
-            SetPlayerDraggability();
-            StartCoroutine(switchState(GameManager.states.live, 0.3f));
-            
-        }
-    }
-
-    private bool CheckPlayersAlive()
-    {
-        for (int p = 0; p < playerCount; p++)
-        {
-            if (playerList[p].GetAlive())
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    IEnumerator SetupPlayers()
-    {
-
-        for (int p = 0; p < playerCount; p++)
-        {
-
-        }
-        yield return new WaitForSeconds(1.0f);
-    }
-
-    IEnumerator Wait(float waitTime)
-    {
-        yield return new WaitForSeconds(waitTime);
-        AllAllowedMoves(activeTile);
-    }
-
-    void InitGame()
-    {
-        // create grid, allocate points and allocate players
-        liveHexGrid = new hexGrid();
-        liveHexGrid.SetCoords(hexGridx, hexGridy);
-        liveHexGrid.radius = hexRadius;
-        liveHexGrid.useAsInnerCircleRadius = useAsInnerCircleRadius;
-        liveHexGrid.playerCount = playerCount;
-        liveHexGrid.AIPlayerCount = AIPlayerCount;
-        liveHexGrid.playerObj = playerObject;
-        liveHexGrid.pointsObjects = pointsObjects;
-
-        StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
-
-        // once game is setup, set it to PLACING
-        StartCoroutine(switchState(GameManager.states.placing, 3.4f));
-
-        // set player amounts
-        for (int i = 0; i < playerCount; i++)
-        {
-            if (i < 2)
-            {
-                scoreObjects[i].transform.GetComponent<Text>().text = "P" + (i + 1).ToString() + "\n" + "0";
-            }
-            else
-            {
-                scoreObjects[i].transform.GetComponent<Text>().text = "0\n" + "P" + (i + 1).ToString();
-            }
-        }
-    }
-
-    // Could be done with the state machine instead - 20170624
-    IEnumerator switchState(GameManager.states s, float delay = 0.0f)
-    {
-        // first pause the game in transition limbo until the delay has passed
-        GameManager.Instance.currentState = GameManager.states.paused;
-        yield return new WaitForSeconds(delay);
-
-        // then switch to desired state
-        GameManager.Instance.currentState = s;
-
-        if(GameManager.Instance.currentState == GameManager.states.live)
-        {
-            // Set active tile based on player
-            // Need to update to take into acconut multi-units
-            activeTile = SelectPlayer(0);
-            SetPlayerDraggability();
-
-        }
-
-        Debug.Log("Switched to " + s);
-        // Display current state on top text if it's active
-        try
-        {
-            GameObject.Find("TopNotice").GetComponent<Text>().text = s.ToString();
-        }
-        catch
-        {
-            Debug.Log("");
-        }
-    }
 
     // Update is called once per frame
     void Update()
@@ -376,6 +301,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Debug.Log("active player " + activePlayer);
         // Debug.Log("current state " + GameManager.Instance.currentState);
+
         // RESET GAME
         if (Input.GetKey(KeyCode.Escape))
         {
@@ -389,181 +315,12 @@ public class MilkBlossom : MonoBehaviour
 
           if (GameManager.Instance.currentState == GameManager.states.live)
         {
-            if(firstTurn)
-            {
-                // Should highlight the units of the active player's units
-                // And when that unit is picked up, all the valid move tiles should be highlighted
-                AllAllowedMoves(activeTile);
-                firstTurn = false;
-            }
-            // TURN TIMER
-            // only count for human players
-            if (timed)
-            {
-                if (!playerList[activePlayerIndex].GetAI())
-                {
-                    turnTimeCounter += Time.deltaTime;
-                    if (turnTimeCounter > turnTimeLimit)
-                    {
-                        // Indicate to player that time is up
-
-                        // FORCE MOVE FROM PLAYER
-                        // (call AI move)
-
-                        // Increment player turn
-                        turnTimeCounter = 0;
-
-                        IncrementActivePlayer();
-                        ClearHighlights();
-
-                    }
-
-                }
-            }
-
-
-            // CONTROLS
-
-            // debug visualisations 
-            if (Input.GetKey(KeyCode.F1))
-            {
-                liveHexGrid.DisplayIndices(GameManager.tileList);
-            }
-            if (Input.GetKey(KeyCode.F2))
-            {
-                liveHexGrid.DisplayCoords(GameManager.tileList);
-            }
-            if (Input.GetKey(KeyCode.F3))
-            {
-                liveHexGrid.DisplayPoints(GameManager.tileList);
-            }
-
-            if (Input.GetKey(KeyCode.F4))
-            {
-                liveHexGrid.DisplayMoveValues(activePlayerIndex, GameManager.tileList);
-            }
-            if (Input.GetKey(KeyCode.F5))
-            {
-                liveHexGrid.DisplayClear(GameManager.tileList);
-            }
-            // DEBUG TURN SWITCHING
-            if (Input.GetKey(KeyCode.N))
-            {
-                IncrementActivePlayer();
-            }
-
-            if (Input.GetKey(KeyCode.W))
-            {
-                targetRange++;
-                if (targetRange > hexGridRadius * 2)
-                {
-                    targetRange = hexGridRadius * 2;
-                }
-                // dependent on gridradius
-            }
-            if (Input.GetKey(KeyCode.X))
-            {
-                targetRange--;
-                if (targetRange < 1)
-                {
-                    targetRange = 1;
-                }
-            }
-
-            // Rudimentary highlight controls
-            if (Input.GetKey(KeyCode.Q))
-            {
-                currentDir = 4;
-            }
-
-            if (Input.GetKey(KeyCode.E))
-            {
-                currentDir = 5;
-            }
-
-            if (Input.GetKey(KeyCode.A))
-            {
-                currentDir = 3;
-
-            }
-            if (Input.GetKey(KeyCode.D))
-            {
-                currentDir = 0;
-            }
-            if (Input.GetKey(KeyCode.Z))
-            {
-                currentDir = 2;
-            }
-            if (Input.GetKey(KeyCode.C))
-            {
-                currentDir = 1;
-            }
-
-            /*
-            if (GameManager.Instance.activeControlOptions.(GameManager.controlOptions.mouse))
-            {
-                                
-            }
-            */
-            tile targetTile = null;
-
-            if (Input.GetKey(KeyCode.T))
-            {
-                PseudoAIMove(playerList[activePlayerIndex]);
-            }
-
-            turnCooldown -= Time.deltaTime;
-            if (turnCooldown < 0)
-            {
-                // check if it's AI's turn to go
-                if (playerList[activePlayerIndex].GetAI())
-                {
-                    turnCooldown = 0.75f;
-                    AIMove(playerList[activePlayerIndex]);
-
-                }
-                else
-                {
-                    turnCooldown = 0.03f;
-
-                    //  targetTile = LinearHighlighter(activeTile, currentDir, targetRange);
-                }
-                
-
-                if (Input.GetKey(KeyCode.Return))
-                {
-                    if (activeTile != targetTile)
-                    {
-
-                        MakeMove(playerList[activePlayerIndex], targetTile);
-                        ClearHighlights();
-
-                        // IncrementativePlayer();
-                    }
-                }
-
-            }
-
+            Live();
         }
 
         if (GameManager.Instance.currentState == GameManager.states.ending)
         {
-            // Include the final tiles for each player here
-
-
-            int hiPlayer = 0;
-            int hiScore = 0;
-            for (int i = 0; i < playerCount; i++)
-            {
-                if (playerList[i].GetPoints() > hiScore)
-                {
-                    hiPlayer = i + 1;
-                    hiScore = playerList[i].GetPoints();
-                }
-
-            }
-
-            endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
+            Ending();
         }
     }
 
@@ -576,6 +333,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Allow draggability of the correct one only
         // unit index should increment when last player flips to first one
+        // The dragging itself happens with the Drag class
         SetPlayerPlacementDraggability(activeUnitIndex + 1);   
 
         // Manual placement
@@ -589,29 +347,193 @@ public class MilkBlossom : MonoBehaviour
         // Only the remaining unit(s) on the sidelines can be placed        
     }
 
-    // if switching to player, check if any valid moves are available
-    public bool ValidMoves(player p)
+    void Live()
     {
-        for (int d = 0; d < directions.Length; d++)
+        ClearHighlights();
+        HighlightPlayerUnitTiles(activePlayerIndex);
+
+
+        // CONTROLS
+        if (Input.GetKey(KeyCode.H))
         {
-            foreach (tile t in GameManager.tileList)
+            HighlightPlayerUnitTiles(activePlayerIndex);
+        }
+
+
+        // debug visualisations 
+        if (Input.GetKey(KeyCode.F1))
+        {
+            liveHexGrid.DisplayIndices(GameManager.tileList);
+        }
+        if (Input.GetKey(KeyCode.F2))
+        {
+            liveHexGrid.DisplayCoords(GameManager.tileList);
+        }
+        if (Input.GetKey(KeyCode.F3))
+        {
+            liveHexGrid.DisplayPoints(GameManager.tileList);
+        }
+
+        if (Input.GetKey(KeyCode.F4))
+        {
+            liveHexGrid.DisplayMoveValues(activePlayerIndex, GameManager.tileList);
+        }
+        if (Input.GetKey(KeyCode.F5))
+        {
+            liveHexGrid.DisplayClear(GameManager.tileList);
+        }
+        // DEBUG TURN SWITCHING
+        if (Input.GetKey(KeyCode.N))
+        {
+            IncrementActivePlayer();
+        }
+
+        if (Input.GetKey(KeyCode.W))
+        {
+            targetRange++;
+            if (targetRange > hexGridRadius * 2)
             {
-                // is there a tile that sits one step in this direction anywhere on the board that
-                // is both active and unoccupied
-                if (t.cubePosition == p.playerTile.cubePosition + directions[d])
-                {
-                    if (!t.GetOccupied() && t.GetActive())
-                    {
-                        return true;
-                    }
-                }
+                targetRange = hexGridRadius * 2;
+            }
+            // dependent on gridradius
+        }
+        if (Input.GetKey(KeyCode.X))
+        {
+            targetRange--;
+            if (targetRange < 1)
+            {
+                targetRange = 1;
             }
         }
 
-        return false;
+        // Rudimentary highlight controls
+        if (Input.GetKey(KeyCode.Q))
+        {
+            currentDir = 4;
+        }
+
+        if (Input.GetKey(KeyCode.E))
+        {
+            currentDir = 5;
+        }
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            currentDir = 3;
+
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            currentDir = 0;
+        }
+        if (Input.GetKey(KeyCode.Z))
+        {
+            currentDir = 2;
+        }
+        if (Input.GetKey(KeyCode.C))
+        {
+            currentDir = 1;
+        }
+
+        /*
+        if (GameManager.Instance.activeControlOptions.(GameManager.controlOptions.mouse))
+        {
+
+        }
+        */
+        tile targetTile = null;
+
+        if (Input.GetKey(KeyCode.T))
+        {
+            PseudoAIMove(playerList[activePlayerIndex]);
+        }
+
+        turnCooldown -= Time.deltaTime;
+        if (turnCooldown < 0)
+        {
+            // check if it's AI's turn to go
+            if (playerList[activePlayerIndex].GetAI())
+            {
+                turnCooldown = 0.75f;
+                AIMove(playerList[activePlayerIndex]);
+
+            }
+            else
+            {
+                turnCooldown = 0.03f;
+
+                //  targetTile = LinearHighlighter(activeTile, currentDir, targetRange);
+            }
+
+
+            if (Input.GetKey(KeyCode.Return))
+            {
+                if (activeTile != targetTile)
+                {
+
+                    MakeMove(playerList[activePlayerIndex], targetTile);
+                    ClearHighlights();
+
+                    // IncrementativePlayer();
+                }
+            }
+
+        }
+
+        /*if(firstTurn)
+        {
+            // Should highlight the units of the active player's units
+            // And when that unit is picked up, all the valid move tiles should be highlighted
+            HighlightPlayerUnitTiles(activePlayerIndex);
+            AllAllowedMoves(activeTile);
+            firstTurn = false;
+        }*/
+        // TURN TIMER
+        // only count for human players
+        if (timed)
+        {
+            if (!playerList[activePlayerIndex].GetAI())
+            {
+                turnTimeCounter += Time.deltaTime;
+                if (turnTimeCounter > turnTimeLimit)
+                {
+                    // Indicate to player that time is up
+
+                    // FORCE MOVE FROM PLAYER
+                    // (call AI move)
+
+                    // Increment player turn
+                    turnTimeCounter = 0;
+
+                    IncrementActivePlayer();
+                    ClearHighlights();
+
+                }
+
+            }
+        }
     }
 
+    void Ending()
+    {
+        // Include the final tiles for each player here
+        int hiPlayer = 0;
+        int hiScore = 0;
+        for (int i = 0; i < playerCount; i++)
+        {
+            if (playerList[i].GetPoints() > hiScore)
+            {
+                hiPlayer = i + 1;
+                hiScore = playerList[i].GetPoints();
+            }
 
+        }
+
+        endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
+    }
+    // MAIN GAME FLOW - END
+    
+    // PLACEMENT AND MOVEMENT FUNCTIONS
     static tile SelectPlayer(int playerNumber = 0)
     {
         Debug.Log("player number " + (playerNumber + 1).ToString() + " selected");
@@ -627,185 +549,26 @@ public class MilkBlossom : MonoBehaviour
         return null;
     }
 
-    public void ClearHighlights()
+
+    void IncrementPlacementPlayer()
     {
-        foreach (tile t in GameManager.tileList)
+        activePlayerIndex++;
+        if (activePlayerIndex >= playerCount)
         {
-            t.SetHighlight(false, highlightColorList[0]);
-        }
-        try
-        {
-            playerList[activePlayerIndex].playerTile.SetHighlight(true, highlightColorList[0]);
-        }
-        catch
-        {
+            activePlayerIndex = 0;
+            activeUnitIndex += 1;
 
         }
-
-    }
-
-    void AllAllowedPlacements()
-    {
-        foreach (tile t in GameManager.tileList)
+        if (activeUnitIndex >= unitCount)
         {
-            t.SetHighlight(false, highlightColorList[0]);
-            if (t.GetOccupied() == false && t.points == 1)
-            {
-                t.SetHighlight(true, highlightColorList[1]);
-                t.SetValidMove(true);
-            }
-            else
-            {
-                t.SetValidMove(false);
-            }
+            Debug.Log("Active unit index reached unit count maximum");
+            // This should end the placement phase
+            SetPlayerDraggability();
+            StartCoroutine(switchState(GameManager.states.live, 0.3f));
+
         }
     }
 
-    void AllAllowedMoves(tile sourceTile)
-    {
-        // Unhighlight all tiles
-        foreach (tile t in GameManager.tileList)
-        {
-             t.SetHighlight(false, highlightColorList[0]);
-        }
-        try
-        {
-            sourceTile.SetHighlight(true, highlightColorList[0]);
-        }
-        catch
-        {
-            Debug.Log("Could not highlight sourcetile");
-
-        }
-        try
-        {
-            for (int d = 0; d < 6; d++)
-            {
-                bool directionBlocked = false;
-                for (int r = 1; r <= (hexGridRadius * 2); r++)
-                {
-
-                    Vector3 relativeTargetPosition = directions[d] * r;
-                    // try and step to the next tile in the direction
-                    // does the tile exist
-                    foreach (tile t in GameManager.tileList)
-                    {
-                        if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
-                        {
-                            if (!directionBlocked)
-                            {
-                                if (t.GetActive() && !t.GetOccupied())
-                                {
-                                    t.SetHighlight(true, highlightColorList[0]);
-                                    t.SetValidMove(true);
-                                }
-                                else
-                                {
-                                    t.SetHighlight(false, highlightColorList[0]);
-                                    directionBlocked = true;
-                                    t.SetValidMove(false);
-                                    // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
-                                    //range = r; // bad practice, setting an int within the function that's returning a type
-                                    //targetTile.highlightColor = 2;
-                                    //return targetTile;
-
-                                }
-                            }
-                            else
-                            {
-                                t.SetHighlight(false, highlightColorList[0]);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch
-        {
-            Debug.Log("Unable to highlight");
-        }
-    }
-
-    tile LinearHighlighter(tile sourceTile, int direction, int range)
-    {
-        // The 5 is linked to the board size
-        Mathf.Clamp((float)direction, 0, 5);
-
-
-        // there should be a way to know from the cubic coordinates whether the tile is on a line
-        // Refresh the highlighted tiles for all in range
-        AllAllowedMoves(activeTile);
-
-        // first, unhighlight all tiles
-        foreach (tile t in GameManager.tileList)
-        {
-            t.SetHighlight(false, highlightColorList[0]);
-        }
-
-        try
-        {
-            sourceTile.SetHighlight(true, highlightColorList[0]);
-        }
-        catch
-        {
-
-        }
-
-        sourceTile.highlightColor = 0;
-        tile targetTile = sourceTile;
-        for (int r = 1; r <= range; r++)
-        {
-            Vector3 relativeTargetPosition = directions[direction] * r;
-            // try and step to the next tile in the direction
-            // does the tile exist
-            try
-            {
-                foreach (tile t in GameManager.tileList)
-                {
-                    if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
-                    {
-                        if (t.GetActive() && !t.GetOccupied())
-                        {
-                            t.SetHighlight(true, highlightColorList[0]);
-                            targetTile = t;
-                            targetTile.highlightColor = 1;
-                        }
-                        else
-                        {
-                            // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
-                            range = r; // bad practice, setting an int within the function that's returning a type
-                            targetTile.highlightColor = 2;
-                            return targetTile;
-
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                Debug.Log("Error with tile highlighting");
-            }
-
-        }
-        // final target tile is highlighted with final highlight color
-        targetTile.highlightColor = 2;
-
-        return targetTile;
-    }
-
-    void UpdateScores()
-    {
-        for (int p = 0; p < playerCount; p++)
-        {
-            if (p < 2)
-            {
-                scoreObjects[p].transform.GetComponent<Text>().text = "P" + (p + 1).ToString() + "\n" + playerList[p].GetPoints().ToString();
-            }
-            else
-            {
-                scoreObjects[p].transform.GetComponent<Text>().text = playerList[p].GetPoints().ToString() + "\nP" + (p + 1).ToString();
-            }
-        }
-    }
 
     void MakeMove(player p, tile targetTile)
     {
@@ -923,13 +686,6 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-    void AcquirePoints(tile t, player p)
-    {
-        // Increment the point count of the active player
-        p.AddPoints(t.points);
-        // Display that increase as a floating text above the tile that was left
-        Toolbox.Instance.SpawnText(t.points.ToString() + LocalisationManager.Instance.GetLocalisedValue("points"), new Vector3(t.offsetPosition.x, t.offsetPosition.y,-4.0f),2.5f, 0.2f);
-    }
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
     {
@@ -965,6 +721,8 @@ public class MilkBlossom : MonoBehaviour
         IncrementActivePlayer();
 
     }
+
+    // ------- AI ------- //
 
     void AIMove(player p)
     {
@@ -1282,6 +1040,283 @@ public class MilkBlossom : MonoBehaviour
         */
 
     }
+
+    ///  SCORE FUNCTIONS    
+    void AcquirePoints(tile t, player p)
+    {
+        // Increment the point count of the active player
+        p.AddPoints(t.points);
+        // Display that increase as a floating text above the tile that was left
+        Toolbox.Instance.SpawnText(t.points.ToString() + LocalisationManager.Instance.GetLocalisedValue("points"), new Vector3(t.offsetPosition.x, t.offsetPosition.y, -4.0f), 2.5f, 0.2f);
+    }
+    void UpdateScores()
+    {
+        for (int p = 0; p < playerCount; p++)
+        {
+            if (p < 2)
+            {
+                scoreObjects[p].transform.GetComponent<Text>().text = "P" + (p + 1).ToString() + "\n" + playerList[p].GetPoints().ToString();
+            }
+            else
+            {
+                scoreObjects[p].transform.GetComponent<Text>().text = playerList[p].GetPoints().ToString() + "\nP" + (p + 1).ToString();
+            }
+        }
+    }
+
+
+    // -----------------------------------
+    // HIGHLIGHTING and MOVE VALIDITY FUNCTIONS
+    // Highlight in a line in one direction
+    public void ClearHighlights()
+    {
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+        }
+    }
+
+    void HighlightPlayerUnitTiles(int playerIndex)
+    {
+        Debug.Log("Highlighting player unit tiles");
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+            foreach (player p in playerList)
+            {
+                if (p.playerNumber == (activePlayerIndex + 1))
+                {
+                    p.playerTile.SetHighlight(true, highlightColorList[1]);
+                }
+            }
+        }
+    }
+
+    void AllAllowedPlacements()
+    {
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+            if (t.GetOccupied() == false && t.points == 1)
+            {
+                t.SetHighlight(true, highlightColorList[1]);
+                t.SetValidMove(true);
+            }
+            else
+            {
+                t.SetValidMove(false);
+            }
+        }
+    }
+
+
+    // if switching to player, check if any valid moves are available
+    public bool ValidMoves(player p)
+    {
+        for (int d = 0; d < directions.Length; d++)
+        {
+            foreach (tile t in GameManager.tileList)
+            {
+                // is there a tile that sits one step in this direction anywhere on the board that
+                // is both active and unoccupied
+                if (t.cubePosition == p.playerTile.cubePosition + directions[d])
+                {
+                    if (!t.GetOccupied() && t.GetActive())
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+    void AllAllowedMoves(tile sourceTile)
+    {
+        // Unhighlight all tiles
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+        }
+        try
+        {
+            sourceTile.SetHighlight(true, highlightColorList[0]);
+        }
+        catch
+        {
+            Debug.Log("Could not highlight sourcetile");
+
+        }
+        try
+        {
+            for (int d = 0; d < 6; d++)
+            {
+                bool directionBlocked = false;
+                for (int r = 1; r <= (hexGridRadius * 2); r++)
+                {
+
+                    Vector3 relativeTargetPosition = directions[d] * r;
+                    // try and step to the next tile in the direction
+                    // does the tile exist
+                    foreach (tile t in GameManager.tileList)
+                    {
+                        if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
+                        {
+                            if (!directionBlocked)
+                            {
+                                if (t.GetActive() && !t.GetOccupied())
+                                {
+                                    t.SetHighlight(true, highlightColorList[0]);
+                                    t.SetValidMove(true);
+                                }
+                                else
+                                {
+                                    t.SetHighlight(false, highlightColorList[0]);
+                                    directionBlocked = true;
+                                    t.SetValidMove(false);
+                                    // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
+                                    //range = r; // bad practice, setting an int within the function that's returning a type
+                                    //targetTile.highlightColor = 2;
+                                    //return targetTile;
+
+                                }
+                            }
+                            else
+                            {
+                                t.SetHighlight(false, highlightColorList[0]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            Debug.Log("Unable to highlight");
+        }
+    }
+    tile LinearHighlighter(tile sourceTile, int direction, int range)
+    {
+        // The 5 is linked to the board size
+        Mathf.Clamp((float)direction, 0, 5);
+
+
+        // there should be a way to know from the cubic coordinates whether the tile is on a line
+        // Refresh the highlighted tiles for all in range
+        AllAllowedMoves(activeTile);
+
+        // first, unhighlight all tiles
+        foreach (tile t in GameManager.tileList)
+        {
+            t.SetHighlight(false, highlightColorList[0]);
+        }
+
+        try
+        {
+            sourceTile.SetHighlight(true, highlightColorList[0]);
+        }
+        catch
+        {
+
+        }
+
+        sourceTile.highlightColor = 0;
+        tile targetTile = sourceTile;
+        for (int r = 1; r <= range; r++)
+        {
+            Vector3 relativeTargetPosition = directions[direction] * r;
+            // try and step to the next tile in the direction
+            // does the tile exist
+            try
+            {
+                foreach (tile t in GameManager.tileList)
+                {
+                    if (t.cubePosition == sourceTile.cubePosition + relativeTargetPosition)
+                    {
+                        if (t.GetActive() && !t.GetOccupied())
+                        {
+                            t.SetHighlight(true, highlightColorList[0]);
+                            targetTile = t;
+                            targetTile.highlightColor = 1;
+                        }
+                        else
+                        {
+                            // if it's not a valid tile then it is either deactivated or occupied and the last tile should be the one before the obstacle
+                            range = r; // bad practice, setting an int within the function that's returning a type
+                            targetTile.highlightColor = 2;
+                            return targetTile;
+
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                Debug.Log("Error with tile highlighting");
+            }
+
+        }
+        // final target tile is highlighted with final highlight color
+        targetTile.highlightColor = 2;
+
+        return targetTile;
+    }
+
+  
+
+
+    // -----------------------------------
+    // HELPER FUNCTIONS
+    private bool CheckPlayersAlive()
+    {
+        for (int p = 0; p < playerCount; p++)
+        {
+            if (playerList[p].GetAlive())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    // Could be done with the state machine instead - 20170624
+    IEnumerator switchState(GameManager.states s, float delay = 0.0f)
+    {
+        // first pause the game in transition limbo until the delay has passed
+        GameManager.Instance.currentState = GameManager.states.paused;
+        yield return new WaitForSeconds(delay);
+
+        // then switch to desired state
+        GameManager.Instance.currentState = s;
+
+        if (GameManager.Instance.currentState == GameManager.states.live)
+        {
+            // Set active tile based on player
+            // Need to update to take into acconut multi-units
+            activeTile = SelectPlayer(0);
+            SetPlayerDraggability();
+
+        }
+
+        Debug.Log("Switched to " + s);
+        // Display current state on top text if it's active
+        try
+        {
+            GameObject.Find("TopNotice").GetComponent<Text>().text = s.ToString();
+        }
+        catch
+        {
+            Debug.Log("");
+        }
+    }
+
+
+    IEnumerator Wait(float waitTime)
+    {
+        yield return new WaitForSeconds(waitTime);
+        AllAllowedMoves(activeTile);
+    }
+
+
 
     Vector3 CubeDirection(int dir)
     {

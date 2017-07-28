@@ -163,6 +163,12 @@ public class Drag : ControlManager {
                 // If this is the deployment phase, only deploy the player and increment accordingly
                 if (GameManager.Instance.currentState == GameManager.states.placing)
                 {
+                    targetTileIndex = GameController.liveHexGrid.GetTileIndexByPos(
+                       new Vector2(targetTile.transform.position.x, targetTile.transform.position.y),
+                       GameManager.tileList);
+
+                    Debug.Log("Target tile index for player placement " + targetTileIndex.ToString());
+
                     // What is the player unit index? 
                     GameController.MakePlacement(targetTileIndex, this.gameObject.transform.parent.gameObject);
                 }
