@@ -84,6 +84,7 @@ public class Drag : ControlManager {
                 if (CheckMove())
                 {
                     currentState = dragStates.movingToTarget;
+                    GameController.ClearHighlights();
                 }
                 else
                 {

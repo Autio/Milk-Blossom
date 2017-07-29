@@ -164,6 +164,7 @@ public class hexGrid  {
         // Location of player token should be in a preset array
         // relative to the screen edge
         float yBuffer = 0.5f;
+        float xBuffer = 0.5f;
         
         GameObject playerAnchor = GameObject.Find("PlayerAnchor");
 
@@ -173,9 +174,10 @@ public class hexGrid  {
             {
                 int p = i + 1;
                 // Should be created at the side from where it can be dragged into play
+                // create all the units of one player side by side
                 GameObject newPlayer = 
                     (GameObject)UnityEngine.MonoBehaviour.Instantiate
-                    (playerObject, new Vector3(playerAnchor.transform.position.x, 
+                    (playerObject, new Vector3(playerAnchor.transform.position.x + j * xBuffer, 
                     playerAnchor.transform.position.y - i - j * yBuffer, -0.5f), Quaternion.identity);
 
                 // set player text

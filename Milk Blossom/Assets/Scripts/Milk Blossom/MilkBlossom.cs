@@ -394,8 +394,9 @@ public class MilkBlossom : MonoBehaviour
         SetPlayerDraggability();
 
         // Show all possible moves when dragging & dropping
-        AllAllowedMoves(activeTile);
-
+        //AllAllowedMoves(activeTile);
+        ClearHighlights();
+        HighlightPlayerUnitTiles(activePlayerIndex);
 
         if (!ValidMoves(playerList[activePlayerIndex]))
         {
@@ -492,9 +493,6 @@ public class MilkBlossom : MonoBehaviour
         // update scores
         UpdateScores();
         StartCoroutine(moveUnit(sourcePos, targetPos, p));
-
-
-
 
     }
 
