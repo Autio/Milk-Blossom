@@ -463,8 +463,7 @@ public class MilkBlossom : MonoBehaviour
         }
         return null;
     }
-
-
+    
     void IncrementPlacementPlayer()
     {
         activePlayerIndex++;
@@ -476,7 +475,7 @@ public class MilkBlossom : MonoBehaviour
         }
         if (activeUnitIndex >= unitCount)
         {
-            Debug.Log("Active unit index reached unit count maximum");
+            Debug.Log("Active unit index reached unit count maximum. Switching to live.");
             // This should end the placement phase
             ClearPlayerPlacementDraggability();
             ClearHighlights();
@@ -563,6 +562,7 @@ public class MilkBlossom : MonoBehaviour
         // Each player places one unit and then it loops around to the first until all are placed
         IncrementPlacementPlayer();
     }
+
     public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
     {
         player p;
@@ -1155,10 +1155,11 @@ public class MilkBlossom : MonoBehaviour
     }
     public void AllAllowedMoves(tile sourceTile)
     {
-        // Unhighlight all tiles
+        // Unhighlight all tiles and set them as invalid moves
         foreach (tile t in GameManager.tileList)
         {
             t.SetHighlight(false, highlightColorList[0]);
+            t.SetValidMove(false);
         }
         try
         {

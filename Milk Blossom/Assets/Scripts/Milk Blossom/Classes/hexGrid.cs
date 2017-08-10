@@ -173,6 +173,7 @@ public class hexGrid  {
             for (int j = 0; j < unitCount; j++)
             {
                 int p = i + 1;
+                int u = j + 1;
                 // Should be created at the side from where it can be dragged into play
                 // create all the units of one player side by side
                 GameObject newPlayer = 
@@ -181,11 +182,11 @@ public class hexGrid  {
                     playerAnchor.transform.position.y - i - j * yBuffer, -0.5f), Quaternion.identity);
 
                 // set player text
-                newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (p).ToString() + "_" + (j+1).ToString();
+                newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (p).ToString() + "_" + (u).ToString();
                 player pl = new player();
                 playerList.Add(pl); // This means that the playerlist does not map one-to-one between players and player units. i.e. the 2nd entry can still be for player 1
                 pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
-                pl.unitNumber = j + 1;
+                pl.unitNumber = u;
                 pl.playerGameObject = newPlayer;
 
                 if (playerCount - p < AIPlayerCount)
