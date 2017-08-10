@@ -484,7 +484,7 @@ public class MilkBlossom : MonoBehaviour
         }
     }
 
-
+    /*
     void MakeMove(player p, tile targetTile)
     {
 
@@ -502,6 +502,7 @@ public class MilkBlossom : MonoBehaviour
         Vector3 sourcePos = p.playerGameObject.transform.position;
         Vector3 targetPos = new Vector3(targetTile.tileObject.transform.position.x, targetTile.tileObject.transform.position.y, p.playerGameObject.transform.position.z);
         // set player tile as the target tile
+        Debug.Log("Setting player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString() + " to tile of index " + targetTile.index.ToString());
         p.playerTile = targetTile;
        // activeTile = targetTile;
         liveHexGrid.enterTile(targetTile);
@@ -510,7 +511,7 @@ public class MilkBlossom : MonoBehaviour
         UpdateScores();
        // StartCoroutine(moveUnit(sourcePos, targetPos, p));
 
-    }
+    }*/
 
     public bool CheckMove(int targetTileIndex)
     {
@@ -562,18 +563,25 @@ public class MilkBlossom : MonoBehaviour
         // Each player places one unit and then it loops around to the first until all are placed
         IncrementPlacementPlayer();
     }
-
+    
     public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
     {
-        player p;
+        player p = null;
         if(playerIndex == 0)
         {
-            p = playerList[activePlayerIndex];
-        } else
-        {
-            p = playerList[playerIndex];
+            for(int i = 0; i < playerList.Count; i++)
+            {
+
+            
+                if(GameManager.tileList[sourceTileIndex] == playerList[i].playerTile)
+                {
+                        p = playerList[i];
+                }
+
+            }
+            
         }
-    
+     
         // Acquire points - need
         // 1) point amount, so need the tile the player is moving away from
         // 2) Display a popup text with that value and that should happen from the source tile
@@ -583,6 +591,7 @@ public class MilkBlossom : MonoBehaviour
         activeTile = GameManager.tileList[targetTileIndex];
         liveHexGrid.enterTile(activeTile);
         p.playerTile = GameManager.tileList[targetTileIndex];
+        Debug.Log("Setting player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString() + " to tile of index " + targetTileIndex.ToString());
 
         // arrive on new tile (by index)
         IncrementActivePlayer();
@@ -591,7 +600,7 @@ public class MilkBlossom : MonoBehaviour
         UpdateScores();
 
     }
-
+    
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
     {
@@ -726,7 +735,7 @@ public class MilkBlossom : MonoBehaviour
             if (activeTile != targetTile)
             {
 
-                MakeMove(playerList[activePlayerIndex], targetTile);
+             //   MakeMove(playerList[activePlayerIndex], targetTile);
                 ClearHighlights();
 
                 // IncrementativePlayer();
@@ -752,7 +761,7 @@ public class MilkBlossom : MonoBehaviour
                 GameManager.Instance.currentState = GameManager.states.paused;
                 switchState(GameManager.states.moving, 0.2f);
                 targetTile = PseudoAIMove(p);
-                MakeMove(p, targetTile);
+             //   MakeMove(p, targetTile);
             }
         }
 
@@ -1095,7 +1104,7 @@ public class MilkBlossom : MonoBehaviour
 
     void HighlightPlayerUnitTiles(int playerIndex)
     {
-        Debug.Log("Highlighting player unit tiles");
+//        Debug.Log("Highlighting player unit tiles");
         foreach (tile t in GameManager.tileList)
         {
             //t.SetHighlight(false, highlightColorList[0]);
