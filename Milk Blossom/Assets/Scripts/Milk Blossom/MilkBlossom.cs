@@ -124,7 +124,7 @@ public class MilkBlossom : MonoBehaviour
     // MAIN GAME FLOW - START ->
     void Start()
     {
-        // DEFAULT TO ENGLISH - add menu options for other languages
+        // DEFAULT TO ENGLISH - add menu options for other languages. Looks like the folder needs to be different if running on Android. 
         LocalisationManager.Instance.LoadLocalisedText("English.json");
         Debug.Log(LocalisationManager.Instance.GetLocalisedValue("game_title"));
 
@@ -242,7 +242,7 @@ public class MilkBlossom : MonoBehaviour
             // check if it's AI's turn to go
             if (playerList[activePlayerIndex].GetAI())
             {
-                turnCooldown = 0.75f;
+                turnCooldown = 0.75f;              IncrementActivePlayer();
                 AIMove(playerList[activePlayerIndex]);
 
             }
@@ -438,7 +438,7 @@ public class MilkBlossom : MonoBehaviour
         foreach (player p in playerList)
         {
             Debug.Log(p.playerNumber);
-            if (p.playerNumber == (playerNumber + 1))
+            if (p.playerNumber == (playerNumber))
             {
                 Debug.Log("Setting active tile");
                 return p.playerTile;
@@ -475,7 +475,7 @@ public class MilkBlossom : MonoBehaviour
         switchState(GameManager.states.moving, 0.2f);
         // player makes a move
 
-        // acquire points
+        // acquire points from departing the previous tile
         p.AddPoints(p.playerTile.points);
 
         // leave current tile

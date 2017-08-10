@@ -19,8 +19,7 @@ public class Drag : ControlManager {
     int sourceTileIndex;
     int targetTileIndex;
     bool touch;
-
-
+    
     void Start()
     {
         touch = false;
@@ -169,7 +168,6 @@ public class Drag : ControlManager {
                 
                 currentState = dragStates.idle;
 
-
                 // If this is the deployment phase, only deploy the player and increment accordingly
                 if (GameManager.Instance.currentState == GameManager.states.placing)
                 {
@@ -183,7 +181,7 @@ public class Drag : ControlManager {
                     GameController.MakePlacement(targetTileIndex, this.gameObject.transform.parent.gameObject);
                 }
 
-                // Otherwise the move is complete and the appropriate inc
+                // Otherwise the move is complete and the appropriate incrementation
                 if (GameManager.Instance.currentState == GameManager.states.live)
                 {
                     targetTileIndex = GameController.liveHexGrid.GetTileIndexByPos(

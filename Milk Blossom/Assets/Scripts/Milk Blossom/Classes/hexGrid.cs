@@ -315,7 +315,8 @@ public class hexGrid  {
         // Tidy up activity when leaving the tile
         public void leaveTile(tile tileToLeave)
         {
-            tileToLeave.SetOccupied(false);
+            tileToLeave.SetOccupied(true); // Occupied for the purposes of checking
+            tileToLeave.SetValidMove(false);
             tileToLeave.SetActive(false);
             tileToLeave.tileObject.SetActive(false);
 
@@ -325,6 +326,7 @@ public class hexGrid  {
         {
 
             tileToEnter.SetOccupied(true);
+            tileToEnter.SetValidMove(false);
         }
 
 
