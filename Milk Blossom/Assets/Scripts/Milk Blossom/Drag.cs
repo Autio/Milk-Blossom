@@ -36,6 +36,7 @@ public class Drag : ControlManager {
             sourceTileIndex = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(transform.position.x, transform.position.y), GameManager.tileList);
 
             Debug.Log("Showing all allowed moves for source tile of index " + sourceTileIndex.ToString());
+            
             try
             {
                 GameController.AllAllowedMoves(GameManager.tileList[sourceTileIndex]);
@@ -133,8 +134,6 @@ public class Drag : ControlManager {
             {
                 currentState = dragStates.returning;
             }
-
-            // Different logic for initial placement?
 
         }
         touch = false;

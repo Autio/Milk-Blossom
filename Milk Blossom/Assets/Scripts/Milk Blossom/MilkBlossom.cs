@@ -388,7 +388,7 @@ public class MilkBlossom : MonoBehaviour
         {
             activePlayerIndex = 0;
         }
-        activeTile = SelectPlayer(activePlayerIndex);
+        //activeTile = SelectPlayer(activePlayerIndex);
 
         // Only the current player can be dragged and dropped, if it's not an AI
         SetPlayerDraggability();
@@ -398,28 +398,45 @@ public class MilkBlossom : MonoBehaviour
         ClearHighlights();
         HighlightPlayerUnitTiles(activePlayerIndex);
 
-        if (!ValidMoves(playerList[activePlayerIndex]))
+        // Go through all players
+        foreach(player p in playerList)
         {
-            Debug.Log("No valid moves for player " + (activePlayerIndex + 1).ToString()); // +1 correct
-            if (playerList[activePlayerIndex].GetAlive())
+            // If the unit belongs to the active player 
+            if(p.playerNumber == (activePlayerIndex + 1))
             {
-                // can't make moves
-                // player is taken out of circulation
-                playerList[activePlayerIndex].SetAlive(false);
-                playerList[activePlayerIndex].DeathThroes();
-            }
-            // does this mean all players are dead?
-            if (CheckPlayersAlive())
-            {
-                IncrementActivePlayer();
+                // See if the unit has any valid moves left, if not then disable that unit
+                if(!ValidMoves(p))
+                {
+                    
+                    Debug.Log("No valid moves for player " + (activePlayerIndex + 1).ToString() + " unit " + p.unitNumber.ToString()); // +1 correct
+                    if (p.GetAlive())
+                    {
+                        // can't make moves
+                        // player UNIT is taken out of circulation
+                        p.SetAlive(false);
+                        p.DeathThroes();
+
+                        if (CheckPlayersAlive())
+                        {
+                            IncrementActivePlayer();
+                        }
+                        else
+                        {
+                            // transition to end state
+                            StartCoroutine(switchState(GameManager.states.ending, 2.0f));
+                        }
+                    }
+                }
+
+
             }
             else
             {
-                // transition to end state
-                StartCoroutine(switchState(GameManager.states.ending, 2.0f));
+                Debug.Log("All fine");
             }
-
         }
+
+
 
         /*
                 // if player is AI, do an AI move
@@ -437,7 +454,7 @@ public class MilkBlossom : MonoBehaviour
         Debug.Log("player number " + (playerNumber + 1).ToString() + " selected");
         foreach (player p in playerList)
         {
-            Debug.Log(p.playerNumber);
+            Debug.Log("Selecting player " + p.playerNumber + " unit " + p.unitNumber);
             if (p.playerNumber == (playerNumber))
             {
                 Debug.Log("Setting active tile");
@@ -487,12 +504,12 @@ public class MilkBlossom : MonoBehaviour
         Vector3 targetPos = new Vector3(targetTile.tileObject.transform.position.x, targetTile.tileObject.transform.position.y, p.playerGameObject.transform.position.z);
         // set player tile as the target tile
         p.playerTile = targetTile;
-        activeTile = targetTile;
-        liveHexGrid.enterTile(activeTile);
+       // activeTile = targetTile;
+        liveHexGrid.enterTile(targetTile);
 
         // update scores
         UpdateScores();
-        StartCoroutine(moveUnit(sourcePos, targetPos, p));
+       // StartCoroutine(moveUnit(sourcePos, targetPos, p));
 
     }
 
@@ -1089,6 +1106,10 @@ public class MilkBlossom : MonoBehaviour
                     // Why is this playertile not being found?
                     p.playerTile.SetHighlight(true, highlightColorList[1]);
                 }
+                else
+                {
+                    p.playerTile.SetHighlight(false, highlightColorList[0]);
+                }
             }
         }
     }
@@ -1270,6 +1291,7 @@ public class MilkBlossom : MonoBehaviour
     // HELPER FUNCTIONS
     private bool CheckPlayersAlive()
     {
+        // As long as there's a single player left alive, return true
         for (int p = 0; p < playerCount; p++)
         {
             if (playerList[p].GetAlive())
