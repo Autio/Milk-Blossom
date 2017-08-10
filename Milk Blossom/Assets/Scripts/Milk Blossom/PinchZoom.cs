@@ -5,6 +5,8 @@ using UnityEngine;
 public class PinchZoom : MonoBehaviour {
         public float perspectiveZoomSpeed = 0.5f;        // The rate of change of the field of view in perspective mode.
         public float orthoZoomSpeed = 0.5f;        // The rate of change of the orthographic size in orthographic mode.
+        public float maxSize;
+        public float minSize;
         public GameObject camera; 
 
         void Update()
@@ -35,6 +37,7 @@ public class PinchZoom : MonoBehaviour {
 
                     // Make sure the orthographic size never drops below zero.
                     camera.GetComponent<Camera>().orthographicSize = Mathf.Max(camera.GetComponent<Camera>().orthographicSize, 0.1f);
+                    camera.GetComponent<Camera>().orthographicSize = Mathf.Clamp(camera.GetComponent<Camera>().orthographicSize, minSize, maxSize);
                 }
                 else
                 {
