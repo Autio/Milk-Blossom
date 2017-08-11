@@ -191,6 +191,10 @@ public class MilkBlossom : MonoBehaviour
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
+        if(Input.GetKey(KeyCode.T))
+        {
+            EvaluateTileValues();
+        }
         if (GameManager.Instance.currentState == GameManager.states.placing)
         {
             Placing();
@@ -1347,6 +1351,44 @@ public class MilkBlossom : MonoBehaviour
     {
         yield return new WaitForSeconds(waitTime);
         AllAllowedMoves(activeTile);
+    }
+
+    // Algorithm for placing AI units
+    // Assign a value to all tiles
+    void EvaluateTileValues()
+    {
+        // FirstLevelValue = Sum of all point values accessible from the tile
+        int moveVal = 0;
+        // Go through all tiles 
+        foreach (tile t in GameManager.tileList)
+        {
+            moveVal = 0;
+            // Check each direction
+            for (int i = 0; i < directions.Length; i++)
+            {
+                for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board
+                {
+                    Vector3 relPosition = directions[i] * r;
+                    foreach (tile t2 in GameManager.tileList)
+                    {
+                        if (t2.cubePosition == t.cubePosition + relPosition)
+                        {
+                            if (t2.GetActive() && !t2.GetOccupied())
+                            {
+                                if (t2 != t)
+                                {
+                                    moveVal += t2.points;
+                                }
+                            }
+                        }
+                    }
+                }
+                t.moveValues[0] = moveVal;
+                Debug.Log("Tile " + t.index.ToString() + " move value is " + t.moveValues[0].ToString());
+
+            }
+
+        }// 
     }
 
 

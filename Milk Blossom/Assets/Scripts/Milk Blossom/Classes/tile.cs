@@ -15,8 +15,9 @@ public class tile {
         bool highlighted = false;
         public int highlightColor;
         public GameObject tileObject;
-        public int[] moveValues = new int[4];
+        public int[] moveValues = new int[4]; // How valuable are the moves 
         public GameObject tilePointsObject;
+        
         void drawPoints()
         {
             //
