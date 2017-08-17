@@ -68,4 +68,11 @@ public class player : moveablePiece {
         AI = AIFlag;
     }
 
+    private void Update()
+    {
+        // Slerp a derp
+
+
+    }
+
 }

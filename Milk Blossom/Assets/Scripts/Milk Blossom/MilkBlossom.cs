@@ -550,11 +550,16 @@ public class MilkBlossom : MonoBehaviour
         string s = "";
         // Just make sure the correct playerUnitIndex is passed through
         player placementPlayer = null;
+        float incr = 0.2f;
         foreach (player pl in playerList)
         {
-            // TESTING AI PLACEMENT
-            AIPlace(pl);
 
+            if (pl.GetAI())
+            {
+                // TESTING AI PLACEMENT
+                AIPlace(pl, incr);
+                incr += 1f;
+            }
             if (pl.playerGameObject == playerGameObject)
             {
                 placementPlayer = pl;
@@ -571,7 +576,19 @@ public class MilkBlossom : MonoBehaviour
         // Each player places one unit and then it loops around to the first until all are placed
         IncrementPlacementPlayer();
     }
-    
+
+    private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f)
+    {
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            transform.position = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
+            yield return null;
+        }
+    }
+
+
     public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
     {
         player p = null;
@@ -609,13 +626,14 @@ public class MilkBlossom : MonoBehaviour
 
     }
     
-    void MakeAIPlacement(player p, int tileIndex)
+    IEnumerator MakeAIPlacement(player p, int tileIndex, float delay)
     {
         tile t = GameManager.tileList[tileIndex];
         Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
-        p.playerGameObject.transform.position = new Vector3(t.offsetPosition.x, t.offsetPosition.y, p.playerGameObject.transform.position.z);
+        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, p.playerGameObject.transform.position.z), 2.5f));
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
         p.playerTile = GameManager.tileList[tileIndex];
+        yield return new WaitForSeconds(delay);
         IncrementPlacementPlayer();
     }
 
@@ -767,7 +785,7 @@ public class MilkBlossom : MonoBehaviour
 
     // ------- AI ------- //
 
-    void AIPlace(player p)
+    void AIPlace(player p, float delay = 0.2f)
     {
         // Refresh board valuation
         EvaluateTileValues();
@@ -786,7 +804,7 @@ public class MilkBlossom : MonoBehaviour
 
 
         // Place the player unit onto the target tile once it's been selected
-        MakeAIPlacement(p, targetTileIndex);
+        StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
     }
 
     void AIMove(player p)
@@ -1405,7 +1423,6 @@ public class MilkBlossom : MonoBehaviour
             // Only evaluate if the tile isn't occupied - if it's occupied it can't be reached anyway
             if (!t.GetOccupied())
             {
-
                 // Check each direction
                 for (int i = 0; i < directions.Length; i++)
                 {
