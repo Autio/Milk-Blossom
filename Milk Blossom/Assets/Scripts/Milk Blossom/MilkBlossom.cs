@@ -552,11 +552,15 @@ public class MilkBlossom : MonoBehaviour
         player placementPlayer = null;
         foreach (player pl in playerList)
         {
-            if(pl.playerGameObject == playerGameObject)
+            // TESTING AI PLACEMENT
+            AIPlace(pl);
+
+            if (pl.playerGameObject == playerGameObject)
             {
                 placementPlayer = pl;
                 s = pl.playerNumber.ToString() + "_" + pl.unitNumber.ToString();
                 Debug.Log("Player unit being placed " + s);
+
             }
         }
 
@@ -605,6 +609,15 @@ public class MilkBlossom : MonoBehaviour
 
     }
     
+    void MakeAIPlacement(player p, int tileIndex)
+    {
+        tile t = GameManager.tileList[tileIndex];
+        Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
+        p.playerGameObject.transform.position = new Vector3(t.offsetPosition.x, t.offsetPosition.y, p.playerGameObject.transform.position.z);
+        liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
+        p.playerTile = GameManager.tileList[tileIndex];
+        IncrementPlacementPlayer();
+    }
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
     {
@@ -754,6 +767,28 @@ public class MilkBlossom : MonoBehaviour
 
     // ------- AI ------- //
 
+    void AIPlace(player p)
+    {
+        // Refresh board valuation
+        EvaluateTileValues();
+
+        int maxValue = 0;
+        int targetTileIndex = 0;
+        // Choose the optimal tile or thereabouts
+        foreach (tile t in GameManager.tileList)
+        {
+            if(t.moveValues[0] > maxValue)
+            {
+                maxValue = t.moveValues[0];
+                targetTileIndex = t.index;
+            }
+        }
+
+
+        // Place the player unit onto the target tile once it's been selected
+        MakeAIPlacement(p, targetTileIndex);
+    }
+
     void AIMove(player p)
     {
         tile targetTile;
@@ -770,6 +805,9 @@ public class MilkBlossom : MonoBehaviour
         }
 
     }
+
+    // EVALUATING THE BOARD
+    // MOVE VALUE CALCULATION
 
     void CalculateTileMoveValues(player p)
     {
@@ -1363,29 +1401,34 @@ public class MilkBlossom : MonoBehaviour
         foreach (tile t in GameManager.tileList)
         {
             moveVal = 0;
-            // Check each direction
-            for (int i = 0; i < directions.Length; i++)
+            t.moveValues[0] = moveVal;
+            // Only evaluate if the tile isn't occupied - if it's occupied it can't be reached anyway
+            if (!t.GetOccupied())
             {
-                for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board
+
+                // Check each direction
+                for (int i = 0; i < directions.Length; i++)
                 {
-                    Vector3 relPosition = directions[i] * r;
-                    foreach (tile t2 in GameManager.tileList)
+                    for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board
                     {
-                        if (t2.cubePosition == t.cubePosition + relPosition)
+                        Vector3 relPosition = directions[i] * r;
+                        foreach (tile t2 in GameManager.tileList)
                         {
-                            if (t2.GetActive() && !t2.GetOccupied())
+                            if (t2.cubePosition == t.cubePosition + relPosition)
                             {
-                                if (t2 != t)
+                                if (t2.GetActive() && !t2.GetOccupied())
                                 {
-                                    moveVal += t2.points;
+                                    if (t2 != t)
+                                    {
+                                        moveVal += t2.points;
+                                    }
                                 }
                             }
                         }
                     }
+                    t.moveValues[0] = moveVal;
+                    Debug.Log("Tile " + t.index.ToString() + " move value is " + t.moveValues[0].ToString());
                 }
-                t.moveValues[0] = moveVal;
-                Debug.Log("Tile " + t.index.ToString() + " move value is " + t.moveValues[0].ToString());
-
             }
 
         }// 
