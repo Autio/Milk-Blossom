@@ -216,13 +216,12 @@ public class MilkBlossom : MonoBehaviour
         // In player order: 1st, 2nd, 3rd etc then back to 1st
         // Set valid placement tiles on each update cycle
         AllAllowedPlacements();
-        // Manual placement
+
         player activePlayer = null;
         // If the active player is a human, then do human placement
         if (!playerList[activePlayerIndex].GetAI())
         {
-
-            // Allow draggability of the correct one only
+            // Allow draggability of the correct playerunit only
             // unit index should increment when last player flips to first one
             // The dragging itself happens with the Drag class
             SetPlayerPlacementDraggability(activeUnitIndex + 1);
@@ -632,13 +631,15 @@ public class MilkBlossom : MonoBehaviour
     
     IEnumerator MakeAIPlacement(player p, int tileIndex, float delay)
     {
+        GameManager.Instance.currentState = GameManager.states.moving;
         tile t = GameManager.tileList[tileIndex];
         Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
         StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, p.playerGameObject.transform.position.z), 2.5f));
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
         p.playerTile = GameManager.tileList[tileIndex];
         yield return new WaitForSeconds(delay);
-        IncrementPlacementPlayer();
+        GameManager.Instance.currentState = GameManager.states.placing;
+
     }
 
     IEnumerator moveUnit(Vector3 sourcePos, Vector3 targetPos, player unit)
@@ -810,6 +811,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Place the player unit onto the target tile once it's been selected
         StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
+        IncrementPlacementPlayer();
     }
 
     void AIMove(player p)
@@ -1177,12 +1179,27 @@ public class MilkBlossom : MonoBehaviour
             {
                 if (p.playerNumber == (activePlayerIndex + 1))
                 {
-                    // Why is this playertile not being found?
-                    p.playerTile.SetHighlight(true, highlightColorList[1]);
+                    try
+                    {
+                        // Why is this playertile not being found?
+                        p.playerTile.SetHighlight(true, highlightColorList[1]);
+                    }
+                    catch
+                    {
+                        Debug.Log("Could not set highlight for player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
+
+                    }
                 }
                 else
                 {
-                    p.playerTile.SetHighlight(false, highlightColorList[0]);
+                    try
+                    {
+                        p.playerTile.SetHighlight(false, highlightColorList[0]);
+                    }
+                    catch
+                    {
+                        Debug.Log("Could not set highlight for player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
+                    }
                 }
             }
         }
