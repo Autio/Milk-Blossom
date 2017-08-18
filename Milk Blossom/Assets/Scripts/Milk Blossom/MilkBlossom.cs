@@ -225,7 +225,7 @@ public class MilkBlossom : MonoBehaviour
             // unit index should increment when last player flips to first one
             // The dragging itself happens with the Drag class
             SetPlayerPlacementDraggability(activeUnitIndex + 1);
-//            MakePlacement();
+            // MakePlacement();
         }
         // If the active player is an AI, do AI placement
         else
@@ -360,7 +360,7 @@ public class MilkBlossom : MonoBehaviour
     {
         foreach (player p in playerList)
         {
-            if (p.playerNumber != (activePlayerIndex + 1)) // +1 is correct
+            if (p.playerNumber != ((activePlayerIndex) % playerCount) + 1) // +1 is correct
             {
                 //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                 p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
@@ -480,18 +480,19 @@ public class MilkBlossom : MonoBehaviour
     void IncrementPlacementPlayer()
     {
         activePlayerIndex++;
-        if (activePlayerIndex >= playerCount)
+        if (activePlayerIndex % playerCount == 0)
         {
-            activePlayerIndex = 0;
             activeUnitIndex += 1;
 
         }
-        if (activeUnitIndex >= unitCount)
+        ClearPlayerPlacementDraggability();
+        ClearHighlights();
+
+        if (activePlayerIndex >= (playerCount * unitCount))
         {
             Debug.Log("Active unit index reached unit count maximum. Switching to live.");
             // This should end the placement phase
-            ClearPlayerPlacementDraggability();
-            ClearHighlights();
+            activePlayerIndex = 0;
             activeUnitIndex = 0;
             StartCoroutine(switchState(GameManager.states.live, 0.3f));
         }
