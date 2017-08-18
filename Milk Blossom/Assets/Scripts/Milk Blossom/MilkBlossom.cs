@@ -210,21 +210,31 @@ public class MilkBlossom : MonoBehaviour
     }
 
     void Placing()
-    {
+    { 
+
         // Allow placement of units by dragging from the side onto single piece tiles
         // In player order: 1st, 2nd, 3rd etc then back to 1st
         // Set valid placement tiles on each update cycle
         AllAllowedPlacements();
-
-        // Allow draggability of the correct one only
-        // unit index should increment when last player flips to first one
-        // The dragging itself happens with the Drag class
-        SetPlayerPlacementDraggability(activeUnitIndex + 1);   
-
         // Manual placement
+        player activePlayer = null;
+        // If the active player is a human, then do human placement
+        if (!playerList[activePlayerIndex].GetAI())
+        {
 
-        // AI Placement
-                        
+            // Allow draggability of the correct one only
+            // unit index should increment when last player flips to first one
+            // The dragging itself happens with the Drag class
+            SetPlayerPlacementDraggability(activeUnitIndex + 1);
+//            MakePlacement();
+        }
+        // If the active player is an AI, do AI placement
+        else
+       {
+            // TESTING AI PLACEMENT
+            activePlayer = playerList[activePlayerIndex];
+            AIPlace(activePlayer, 0.2f);    
+        }
         // Check what should happen next:
         // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
         // Only the remaining unit(s) on the sidelines can be placed      
@@ -554,12 +564,6 @@ public class MilkBlossom : MonoBehaviour
         foreach (player pl in playerList)
         {
 
-            if (pl.GetAI())
-            {
-                // TESTING AI PLACEMENT
-                AIPlace(pl, incr);
-                incr += 1f;
-            }
             if (pl.playerGameObject == playerGameObject)
             {
                 placementPlayer = pl;
@@ -802,6 +806,7 @@ public class MilkBlossom : MonoBehaviour
             }
         }
 
+        p.playerTile = GameManager.tileList[targetTileIndex];
 
         // Place the player unit onto the target tile once it's been selected
         StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));

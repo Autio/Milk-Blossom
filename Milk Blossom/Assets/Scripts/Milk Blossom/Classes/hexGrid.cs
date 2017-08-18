@@ -167,11 +167,11 @@ public class hexGrid  {
         float xBuffer = 0.5f;
         
         GameObject playerAnchor = GameObject.Find("PlayerAnchor");
-
-        for (int i = 0; i < playerCount; i++)
+        for (int j = 0; j < unitCount; j++)
         {
-            for (int j = 0; j < unitCount; j++)
+            for (int i = 0; i < playerCount; i++)
             {
+
                 int p = i + 1;
                 int u = j + 1;
                 // Should be created at the side from where it can be dragged into play
