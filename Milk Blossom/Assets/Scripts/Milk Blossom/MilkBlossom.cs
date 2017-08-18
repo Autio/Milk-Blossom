@@ -199,6 +199,7 @@ public class MilkBlossom : MonoBehaviour
         {
             Placing();
         }
+        
         if (GameManager.Instance.currentState == GameManager.states.live)
         {
             Live();
@@ -232,7 +233,7 @@ public class MilkBlossom : MonoBehaviour
        {
             // TESTING AI PLACEMENT
             activePlayer = playerList[activePlayerIndex];
-            AIPlace(activePlayer, 0.2f);    
+            AIPlace(activePlayer, 0.2f * activePlayerIndex % playerCount);    
         }
         // Check what should happen next:
         // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
@@ -248,6 +249,12 @@ public class MilkBlossom : MonoBehaviour
         // ClearHighlights();
         // Only highlight player unit tiles when the unit isn't being dragged
         HighlightPlayerUnitTiles(activePlayerIndex);
+
+        if(playerList[activePlayerIndex].GetAI())
+        {
+            // make AI move
+            AIMove();
+        }
         /*
         turnCooldown -= Time.deltaTime;
         if (turnCooldown < 0)
@@ -639,6 +646,7 @@ public class MilkBlossom : MonoBehaviour
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
         p.playerTile = GameManager.tileList[tileIndex];
         yield return new WaitForSeconds(delay);
+        IncrementPlacementPlayer();
         GameManager.Instance.currentState = GameManager.states.placing;
 
     }
@@ -812,12 +820,41 @@ public class MilkBlossom : MonoBehaviour
 
         // Place the player unit onto the target tile once it's been selected
         StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
-        IncrementPlacementPlayer();
+       
     }
 
-    void AIMove(player p)
+
+
+    void AIMove()
     {
-        tile targetTile;
+        EvaluateTileValues();
+
+        // pick best move
+        int maxValue = 0;
+        int targetTileIndex = 0;
+        // Choose the optimal tile or thereabouts
+        foreach (tile t in GameManager.tileList)
+        {
+            if (t.moveValues[0] > maxValue)
+            {
+                maxValue = t.moveValues[0];
+                targetTileIndex = t.index;
+            }
+        }
+
+      
+        player p = playerList[activePlayerIndex];
+        p.playerTile = GameManager.tileList[targetTileIndex];
+        tile tl = p.playerTile;
+        GameManager.Instance.currentState = GameManager.states.moving;
+        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z), 2.5f));
+        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
+        p.playerTile = GameManager.tileList[targetTileIndex];
+        IncrementActivePlayer();
+        GameManager.Instance.currentState = GameManager.states.live;
+
+        
+        /*
         // see if a move is feasible
         if (ValidMoves(p))
         {
@@ -828,7 +865,7 @@ public class MilkBlossom : MonoBehaviour
                 targetTile = PseudoAIMove(p);
              //   MakeMove(p, targetTile);
             }
-        }
+        }*/
 
     }
 
