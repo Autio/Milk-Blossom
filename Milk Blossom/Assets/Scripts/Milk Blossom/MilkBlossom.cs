@@ -252,10 +252,9 @@ public class MilkBlossom : MonoBehaviour
         // ClearHighlights();
         // Only highlight player unit tiles when the unit isn't being dragged
         // Don't do this every cycle
-        if (gameLiveTime % 1 > 0.95f)
-        {
-            HighlightPlayerUnitTiles(activePlayerIndex);
-        }
+
+           // HighlightPlayerUnitTiles(activePlayerIndex);
+        
 
         if(playerList[activePlayerIndex].GetAI())
         {
@@ -369,7 +368,6 @@ public class MilkBlossom : MonoBehaviour
         }
     }
 
-
     void SetPlayerPlacementDraggability(int unitNumber)
     {
         foreach (player p in playerList)
@@ -408,20 +406,20 @@ public class MilkBlossom : MonoBehaviour
         }
     }
 
+    // Player Incrementation
     void IncrementActivePlayer()
     {
         activePlayerIndex++;
+        // Cycle back to the start 
         if (activePlayerIndex >= playerCount)
         {
             activePlayerIndex = 0;
         }
-        //activeTile = SelectPlayer(activePlayerIndex);
 
         // Only the current player can be dragged and dropped, if it's not an AI
         SetPlayerDraggability();
 
         // Show all possible moves when dragging & dropping
-        //AllAllowedMoves(activeTile);
         ClearHighlights();
         HighlightPlayerUnitTiles(activePlayerIndex);
 
@@ -463,17 +461,6 @@ public class MilkBlossom : MonoBehaviour
             }
         }
 
-
-
-        /*
-                // if player is AI, do an AI move
-                if(playerList[activePlayer - 1].GetAI())
-                {
-                    // 
-                    AIMove(playerList[activePlayer - 1]);
-                    switchState(states.moving, 2.0f);
-                }
-        */
     }
 
     static tile SelectPlayer(int playerNumber = 0)
@@ -508,38 +495,9 @@ public class MilkBlossom : MonoBehaviour
             // This should end the placement phase
             activePlayerIndex = 0;
             activeUnitIndex = 0;
-            StartCoroutine(switchState(GameManager.states.live, 0.3f));
+            StartCoroutine(switchState(GameManager.states.live, 0.0f));
         }
     }
-
-    /*
-    void MakeMove(player p, tile targetTile)
-    {
-
-        switchState(GameManager.states.moving, 0.2f);
-        // player makes a move
-
-        // acquire points from departing the previous tile
-        p.AddPoints(p.playerTile.points);
-
-        // leave current tile
-        liveHexGrid.leaveTile(p.playerTile);
-
-        // move player unit to new tile
-        // switch state to moving
-        Vector3 sourcePos = p.playerGameObject.transform.position;
-        Vector3 targetPos = new Vector3(targetTile.tileObject.transform.position.x, targetTile.tileObject.transform.position.y, p.playerGameObject.transform.position.z);
-        // set player tile as the target tile
-        Debug.Log("Setting player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString() + " to tile of index " + targetTile.index.ToString());
-        p.playerTile = targetTile;
-       // activeTile = targetTile;
-        liveHexGrid.enterTile(targetTile);
-
-        // update scores
-        UpdateScores();
-       // StartCoroutine(moveUnit(sourcePos, targetPos, p));
-
-    }*/
 
     public bool CheckMove(int targetTileIndex)
     {
@@ -650,6 +608,7 @@ public class MilkBlossom : MonoBehaviour
     
     IEnumerator MakeAIPlacement(player p, int tileIndex, float delay)
     {
+        GameManager.Instance.currentState = GameManager.states.moving;
         tile t = GameManager.tileList[tileIndex];
         Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
         StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, 
@@ -814,23 +773,30 @@ public class MilkBlossom : MonoBehaviour
     {
         // Refresh board valuation
         EvaluateTileValues();
+        AllAllowedMoves(p.playerTile);
 
         int maxValue = 0;
         int targetTileIndex = 0;
         // Choose the optimal tile or thereabouts
         foreach (tile t in GameManager.tileList)
         {
-            if(t.moveValues[0] > maxValue)
+            if (t.GetValidMove())
             {
-                maxValue = t.moveValues[0];
-                targetTileIndex = t.index;
+                if (t.moveValues[0] > maxValue)
+                {
+                    maxValue = t.moveValues[0];
+                    targetTileIndex = t.index;
+                }
             }
+      
         }
-
+        if (maxValue == 0)
+        {
+            Debug.Log("No moves available!");
+        }
         p.playerTile = GameManager.tileList[targetTileIndex];
         
         // Set the game to be in an intermediate state so that we have to wait until the move is completed before making he next placement 
-        GameManager.Instance.currentState = GameManager.states.moving;
 
         // Place the player unit onto the target tile once it's been selected
         StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
@@ -841,12 +807,14 @@ public class MilkBlossom : MonoBehaviour
     {
         EvaluateTileValues();
 
-        // pick best move
+        // pick best VALID move
         int maxValue = 0;
         int targetTileIndex = 0;
         // Choose the optimal tile or thereabouts
         foreach (tile t in GameManager.tileList)
         {
+            // is the move valid? 
+
             if (t.moveValues[0] > maxValue)
             {
                 maxValue = t.moveValues[0];
@@ -868,7 +836,6 @@ public class MilkBlossom : MonoBehaviour
 
         StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
             2.5f, GameManager.states.live));
-
 
         IncrementActivePlayer();
 
@@ -1237,7 +1204,6 @@ public class MilkBlossom : MonoBehaviour
                 {
                     try
                     {
-                        // Why is this playertile not being found?
                         p.playerTile.SetHighlight(true, highlightColorList[1]);
                     }
                     catch
@@ -1300,6 +1266,8 @@ public class MilkBlossom : MonoBehaviour
 
         return false;
     }
+   
+
     public void AllAllowedMoves(tile sourceTile)
     {
         // Unhighlight all tiles and set them as invalid moves
