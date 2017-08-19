@@ -96,6 +96,8 @@ public class MilkBlossom : MonoBehaviour
     private float turnTimeCounter = 0;
     public bool useAsInnerCircleRadius = true;
 
+    float gameLiveTime = 0.0f;
+
     static tile activeTile; // does it make sense to keep the active tile as a variable like this?
 
     // player info, would be better in a class probably. Limiting players to 4
@@ -242,13 +244,18 @@ public class MilkBlossom : MonoBehaviour
 
     void Live()
     {
+        gameLiveTime += Time.deltaTime;
         // Main game loop
         // One player at a time selects one of their units from the board and makes a legitimate move
         // Points are counted from beneath
 
         // ClearHighlights();
         // Only highlight player unit tiles when the unit isn't being dragged
-        HighlightPlayerUnitTiles(activePlayerIndex);
+        // Don't do this every cycle
+        if (gameLiveTime % 1 > 0.95f)
+        {
+            HighlightPlayerUnitTiles(activePlayerIndex);
+        }
 
         if(playerList[activePlayerIndex].GetAI())
         {
@@ -588,15 +595,19 @@ public class MilkBlossom : MonoBehaviour
         IncrementPlacementPlayer();
     }
 
-    private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f)
+    private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f, GameManager.states s = GameManager.states.paused)
     {
         float t = 0f;
+        yield return new WaitForSeconds(0.2f);
         while (t < duration)
         {
             t += Time.deltaTime;
             transform.position = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
             yield return null;
         }
+
+        // Switch back to live only after the move is completed
+        GameManager.Instance.currentState = s;
     }
 
 
@@ -639,13 +650,13 @@ public class MilkBlossom : MonoBehaviour
     
     IEnumerator MakeAIPlacement(player p, int tileIndex, float delay)
     {
-        GameManager.Instance.currentState = GameManager.states.moving;
         tile t = GameManager.tileList[tileIndex];
         Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
-        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, p.playerGameObject.transform.position.z), 2.5f));
+        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, 
+            p.playerGameObject.transform.position.z), 2.5f, GameManager.states.placing));
+        yield return new WaitForSeconds(delay);
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
         p.playerTile = GameManager.tileList[tileIndex];
-        yield return new WaitForSeconds(delay);
         IncrementPlacementPlayer();
         GameManager.Instance.currentState = GameManager.states.placing;
 
@@ -817,13 +828,14 @@ public class MilkBlossom : MonoBehaviour
         }
 
         p.playerTile = GameManager.tileList[targetTileIndex];
+        
+        // Set the game to be in an intermediate state so that we have to wait until the move is completed before making he next placement 
+        GameManager.Instance.currentState = GameManager.states.moving;
 
         // Place the player unit onto the target tile once it's been selected
         StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
-       
+
     }
-
-
 
     void AIMove()
     {
@@ -842,18 +854,24 @@ public class MilkBlossom : MonoBehaviour
             }
         }
 
-      
         player p = playerList[activePlayerIndex];
-        p.playerTile = GameManager.tileList[targetTileIndex];
-        tile tl = p.playerTile;
-        GameManager.Instance.currentState = GameManager.states.moving;
-        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z), 2.5f));
+
+        // Leave previous tile
+        liveHexGrid.leaveTile(p.playerTile);
+
+        // Enter next one
         liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
         p.playerTile = GameManager.tileList[targetTileIndex];
-        IncrementActivePlayer();
-        GameManager.Instance.currentState = GameManager.states.live;
+        tile tl = p.playerTile;
 
-        
+        GameManager.Instance.currentState = GameManager.states.moving;
+
+        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
+            2.5f, GameManager.states.live));
+
+
+        IncrementActivePlayer();
+
         /*
         // see if a move is feasible
         if (ValidMoves(p))
@@ -1510,8 +1528,6 @@ public class MilkBlossom : MonoBehaviour
 
         }// 
     }
-
-
 
     Vector3 CubeDirection(int dir)
     {

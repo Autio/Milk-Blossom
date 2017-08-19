@@ -16,7 +16,7 @@ public class Drag : ControlManager {
     enum dragStates {inactive, returning, movingToTarget, idle};
     dragStates currentState;
     MilkBlossom GameController;
-    int sourceTileIndex;
+    int sourceTileIndex = 0;
     int targetTileIndex;
     bool touch;
     
