@@ -218,12 +218,13 @@ public class MilkBlossom : MonoBehaviour
         // Allow placement of units by dragging from the side onto single piece tiles
         // In player order: 1st, 2nd, 3rd etc then back to 1st
         // Set valid placement tiles on each update cycle
-        AllAllowedPlacements();
 
         player activePlayer = null;
         // If the active player is a human, then do human placement
         if (!playerList[activePlayerIndex].GetAI())
         {
+            AllAllowedPlacements();
+
             // Allow draggability of the correct playerunit only
             // unit index should increment when last player flips to first one
             // The dragging itself happens with the Drag class
@@ -235,7 +236,7 @@ public class MilkBlossom : MonoBehaviour
        {
             // TESTING AI PLACEMENT
             activePlayer = playerList[activePlayerIndex];
-            AIPlace(activePlayer, 0.2f * activePlayerIndex % playerCount);    
+            AIPlace(activePlayer, 1.0f);    
         }
         // Check what should happen next:
         // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
@@ -549,8 +550,24 @@ public class MilkBlossom : MonoBehaviour
         liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
         placementPlayer.playerTile = GameManager.tileList[targetTileIndex];
 
+        ClearHighlights();
+
         // Each player places one unit and then it loops around to the first until all are placed
         IncrementPlacementPlayer();
+    }
+    private IEnumerator Place_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f, GameManager.states s = GameManager.states.paused)
+    {
+        float t = 0f;
+        yield return new WaitForSeconds(0.2f);
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            transform.position = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
+            yield return null;
+        }
+
+        // Switch back to live only after the move is completed
+        // GameManager.Instance.currentState = s;
     }
 
     private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f, GameManager.states s = GameManager.states.paused)
@@ -606,12 +623,12 @@ public class MilkBlossom : MonoBehaviour
 
     }
     
-    IEnumerator MakeAIPlacement(player p, int tileIndex, float delay)
+    IEnumerator AIPlacementRoutine(player p, int tileIndex, float delay)
     {
-        GameManager.Instance.currentState = GameManager.states.moving;
+
         tile t = GameManager.tileList[tileIndex];
-        Debug.Log("Autoplacing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
-        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, 
+        Debug.Log("AI placing player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString());
+        StartCoroutine(Place_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, 
             p.playerGameObject.transform.position.z), 2.5f, GameManager.states.placing));
         yield return new WaitForSeconds(delay);
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
@@ -769,11 +786,10 @@ public class MilkBlossom : MonoBehaviour
 
     // ------- AI ------- //
 
-    void AIPlace(player p, float delay = 0.2f)
+    void AIPlace(player p, float delay = 1.0f)
     {
         // Refresh board valuation
         EvaluateTileValues();
-        AllAllowedMoves(p.playerTile);
 
         int maxValue = 0;
         int targetTileIndex = 0;
@@ -795,18 +811,22 @@ public class MilkBlossom : MonoBehaviour
             Debug.Log("No moves available!");
         }
         p.playerTile = GameManager.tileList[targetTileIndex];
-        
+
         // Set the game to be in an intermediate state so that we have to wait until the move is completed before making he next placement 
 
         // Place the player unit onto the target tile once it's been selected
-        StartCoroutine(MakeAIPlacement(p, targetTileIndex, delay));
+        GameManager.Instance.currentState = GameManager.states.moving;
+        StartCoroutine(AIPlacementRoutine(p, targetTileIndex, delay));
 
     }
 
     void AIMove()
     {
+        // Evaluate all possible tiles
         EvaluateTileValues();
+        player p = playerList[activePlayerIndex];
 
+        AllAllowedMoves(p.playerTile);
         // pick best VALID move
         int maxValue = 0;
         int targetTileIndex = 0;
@@ -814,15 +834,16 @@ public class MilkBlossom : MonoBehaviour
         foreach (tile t in GameManager.tileList)
         {
             // is the move valid? 
-
-            if (t.moveValues[0] > maxValue)
+            if (t.GetValidMove())
             {
-                maxValue = t.moveValues[0];
-                targetTileIndex = t.index;
+                if (t.moveValues[0] > maxValue)
+                {
+                    maxValue = t.moveValues[0];
+                    targetTileIndex = t.index;
+                }
             }
         }
 
-        player p = playerList[activePlayerIndex];
 
         // Leave previous tile
         liveHexGrid.leaveTile(p.playerTile);
