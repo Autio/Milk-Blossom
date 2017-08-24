@@ -160,6 +160,7 @@ public class MilkBlossom : MonoBehaviour
         liveHexGrid.useAsInnerCircleRadius = useAsInnerCircleRadius;
         liveHexGrid.playerCount = playerCount;
         liveHexGrid.AIPlayerCount = AIPlayerCount;
+        liveHexGrid.unitCount = unitCount;
         liveHexGrid.playerObj = playerObject;
         liveHexGrid.pointsObjects = pointsObjects;
 
@@ -822,28 +823,50 @@ public class MilkBlossom : MonoBehaviour
 
     void AIMove()
     {
-        // Evaluate all possible tiles
-        EvaluateTileValues();
-        player p = playerList[activePlayerIndex];
-
-        AllAllowedMoves(p.playerTile);
-        // pick best VALID move
+        // Go through all units of the player and then decide which one to move and where
+        int preferredUnit = 0;
         int maxValue = 0;
         int targetTileIndex = 0;
-        // Choose the optimal tile or thereabouts
-        foreach (tile t in GameManager.tileList)
+
+        foreach (player pl in playerList)
         {
-            // is the move valid? 
-            if (t.GetValidMove())
+            if(pl.playerNumber == (activePlayerIndex + 1))
             {
-                if (t.moveValues[0] > maxValue)
+                // This unit belongs to the active player
+                // Evaluate all possible tiles
+                EvaluateTileValues();
+
+                // Set allowed moves based on unit location
+                AllAllowedMoves(pl.playerTile);
+
+                // Choose the optimal tile or thereabouts
+                foreach (tile t in GameManager.tileList)
                 {
-                    maxValue = t.moveValues[0];
-                    targetTileIndex = t.index;
+                    // is the move valid? 
+                    if (t.GetValidMove())
+                    {
+                        if (t.moveValues[0] > maxValue)
+                        {
+                            maxValue = t.moveValues[0];
+                            targetTileIndex = t.index;
+
+                            preferredUnit = pl.unitNumber;
+                        }
+                    }
                 }
             }
         }
 
+        // Decide between units
+        // Basic decision: highest points value always wins
+        player p = null;
+        foreach (player pl in playerList)
+        {
+            if(pl.unitNumber == preferredUnit && pl.playerNumber == activePlayerIndex + 1)
+            {
+                p = pl;
+            }
+        }
 
         // Leave previous tile
         liveHexGrid.leaveTile(p.playerTile);
