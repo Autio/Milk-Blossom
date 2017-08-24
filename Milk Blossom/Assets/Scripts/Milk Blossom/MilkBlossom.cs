@@ -870,6 +870,7 @@ public class MilkBlossom : MonoBehaviour
 
         // Leave previous tile
         liveHexGrid.leaveTile(p.playerTile);
+        AcquirePoints(p.playerTile, p);
 
         // Enter next one
         liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
