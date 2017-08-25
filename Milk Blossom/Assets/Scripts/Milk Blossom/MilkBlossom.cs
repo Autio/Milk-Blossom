@@ -835,6 +835,9 @@ public class MilkBlossom : MonoBehaviour
         int targetTileIndex = 0;
         player p = null;
 
+
+
+
         if (d == difficulty.easy)
         {
             foreach (player pl in playerList)
@@ -1520,6 +1523,9 @@ public class MilkBlossom : MonoBehaviour
         // FirstLevelValue = Sum of all point values accessible from the tile
         int moveVal = 0;
 
+        // Parameters
+        // Immediate tile bias - how to prioritise the guaranteed points from the tile you are about to move to
+        int immediateTileBias = 2;
 
 
         // Go through all tiles 
@@ -1536,7 +1542,7 @@ public class MilkBlossom : MonoBehaviour
 
                 if (!place)
                 {
-                    moveVal += t.points;
+                    moveVal += t.points * immediateTileBias;
                 }
 
                 // Check each direction
