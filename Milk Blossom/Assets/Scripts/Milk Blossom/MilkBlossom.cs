@@ -73,7 +73,10 @@ public class MilkBlossom : MonoBehaviour
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
     private int currentDir;
-    
+
+    public enum difficulty { easy, medium, hard }
+    public difficulty diff = difficulty.easy;
+        
     // Objects specific to Milk Blossom
     public GameObject[] pointsObjects;
     public GameObject hexTile;
@@ -196,7 +199,8 @@ public class MilkBlossom : MonoBehaviour
         }
         if(Input.GetKey(KeyCode.T))
         {
-            EvaluateTileValues();
+            Toolbox.Instance.SpawnText("HELLO WORLD", new Vector3(0,0, -4.0f), 2.5f, 0.5f, 0.1f);
+            StartCoroutine(Pause(0.5f, GameManager.states.live));
         }
         if (GameManager.Instance.currentState == GameManager.states.placing)
         {
@@ -261,7 +265,7 @@ public class MilkBlossom : MonoBehaviour
         if(playerList[activePlayerIndex].GetAI())
         {
             // make AI move
-            AIMove();
+            AIMove(diff);
         }
         /*
         turnCooldown -= Time.deltaTime;
@@ -605,10 +609,9 @@ public class MilkBlossom : MonoBehaviour
             
         }
      
-        // Acquire points - need
-        // 1) point amount, so need the tile the player is moving away from
-        // 2) Display a popup text with that value and that should happen from the source tile
-        AcquirePoints(GameManager.tileList[sourceTileIndex], p);
+
+        // update scores
+        UpdateScores();
 
         liveHexGrid.leaveTile(GameManager.tileList[sourceTileIndex]);
         activeTile = GameManager.tileList[targetTileIndex];
@@ -619,8 +622,11 @@ public class MilkBlossom : MonoBehaviour
         // arrive on new tile (by index)
         IncrementActivePlayer();
 
-        // update scores
-        UpdateScores();
+        // Acquire points - need
+        // 1) point amount, so need the tile the player is moving away from
+        // 2) Display a popup text with that value and that should happen from the source tile
+        AcquirePoints(GameManager.tileList[sourceTileIndex], p);
+
 
     }
     
@@ -790,7 +796,7 @@ public class MilkBlossom : MonoBehaviour
     void AIPlace(player p, float delay = 1.0f)
     {
         // Refresh board valuation
-        EvaluateTileValues();
+        EvaluateTileValues(true);
 
         int maxValue = 0;
         int targetTileIndex = 0;
@@ -821,51 +827,55 @@ public class MilkBlossom : MonoBehaviour
 
     }
 
-    void AIMove()
+    void AIMove(difficulty d)
     {
         // Go through all units of the player and then decide which one to move and where
         int preferredUnit = 0;
         int maxValue = 0;
         int targetTileIndex = 0;
+        player p = null;
 
-        foreach (player pl in playerList)
+        if (d == difficulty.easy)
         {
-            if(pl.playerNumber == (activePlayerIndex + 1))
+            foreach (player pl in playerList)
             {
-                // This unit belongs to the active player
-                // Evaluate all possible tiles
-                EvaluateTileValues();
-
-                // Set allowed moves based on unit location
-                AllAllowedMoves(pl.playerTile);
-
-                // Choose the optimal tile or thereabouts
-                foreach (tile t in GameManager.tileList)
+                if (pl.playerNumber == (activePlayerIndex + 1))
                 {
-                    // is the move valid? 
-                    if (t.GetValidMove())
-                    {
-                        if (t.moveValues[0] > maxValue)
-                        {
-                            maxValue = t.moveValues[0];
-                            targetTileIndex = t.index;
+                    // This unit belongs to the active player
+                    // Evaluate all possible tiles
+                    EvaluateTileValues(false);
 
-                            preferredUnit = pl.unitNumber;
+                    // Set allowed moves based on unit location
+                    AllAllowedMoves(pl.playerTile);
+
+                    // Choose the optimal tile or thereabouts
+                    foreach (tile t in GameManager.tileList)
+                    {
+                        // is the move valid? 
+                        if (t.GetValidMove())
+                        {
+                            if (t.moveValues[0] > maxValue)
+                            {
+                                maxValue = t.moveValues[0];
+                                targetTileIndex = t.index;
+
+                                preferredUnit = pl.unitNumber;
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Decide between units
-        // Basic decision: highest points value always wins
-        player p = null;
-        foreach (player pl in playerList)
-        {
-            if(pl.unitNumber == preferredUnit && pl.playerNumber == activePlayerIndex + 1)
+            // Decide between units
+            // Basic decision: highest points value always wins
+            foreach (player pl in playerList)
             {
-                p = pl;
+                if (pl.unitNumber == preferredUnit && pl.playerNumber == activePlayerIndex + 1)
+                {
+                    p = pl;
+                }
             }
+
         }
 
         // Leave previous tile
@@ -1204,11 +1214,14 @@ public class MilkBlossom : MonoBehaviour
 
     ///  SCORE FUNCTIONS    
     void AcquirePoints(tile t, player p)
-    {
+    {    
+        // Display that increase as a floating text above the tile that was left
+        Toolbox.Instance.SpawnText(t.points.ToString() + LocalisationManager.Instance.GetLocalisedValue("points"), new Vector3(t.offsetPosition.x, t.offsetPosition.y, -4.0f), 1.5f, 0.5f, 0.1f);
         // Increment the point count of the active player
         p.AddPoints(t.points);
-        // Display that increase as a floating text above the tile that was left
-        Toolbox.Instance.SpawnText(t.points.ToString() + LocalisationManager.Instance.GetLocalisedValue("points"), new Vector3(t.offsetPosition.x, t.offsetPosition.y, -4.0f), 2.5f, 0.2f);
+        StartCoroutine(Pause(0.5f, GameManager.states.live));
+
+    
     }
     void UpdateScores()
     {
@@ -1502,21 +1515,34 @@ public class MilkBlossom : MonoBehaviour
 
     // Algorithm for placing AI units
     // Assign a value to all tiles
-    void EvaluateTileValues()
+    void EvaluateTileValues(bool place = false)
     {
         // FirstLevelValue = Sum of all point values accessible from the tile
         int moveVal = 0;
+
+
+
         // Go through all tiles 
         foreach (tile t in GameManager.tileList)
         {
             moveVal = 0;
+
             t.moveValues[0] = moveVal;
+
             // Only evaluate if the tile isn't occupied - if it's occupied it can't be reached anyway
             if (!t.GetOccupied())
-            {
+            {           
+                // If not placing, also count the tile value itself 
+
+                if (!place)
+                {
+                    moveVal += t.points;
+                }
+
                 // Check each direction
                 for (int i = 0; i < directions.Length; i++)
                 {
+                    bool dirBlocked = false;
                     for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board
                     {
                         Vector3 relPosition = directions[i] * r;
@@ -1531,7 +1557,18 @@ public class MilkBlossom : MonoBehaviour
                                         moveVal += t2.points;
                                     }
                                 }
+                                else
+                                {
+                                    // if the direction is blocked, stop looking that way
+                                    dirBlocked = true;
+                                    break;
+                                }
                             }
+
+                        }
+                        if (dirBlocked)
+                        {
+                            break;
                         }
                     }
                     t.moveValues[0] = moveVal;
@@ -1551,5 +1588,21 @@ public class MilkBlossom : MonoBehaviour
     {
         Vector3 newPosition = hex.cubePosition + directions[dir];
         return newPosition;
+    }
+
+    IEnumerator Move(float duration, GameManager.states returnState)
+    {
+        GameManager.Instance.currentState = GameManager.states.moving;
+        yield return new WaitForSeconds(duration);
+        GameManager.Instance.currentState = returnState;
+
+    }
+
+    IEnumerator Pause(float duration, GameManager.states returnState)
+    {
+        GameManager.Instance.currentState = GameManager.states.paused;
+        yield return new WaitForSeconds(duration);
+        GameManager.Instance.currentState = returnState;
+
     }
 }

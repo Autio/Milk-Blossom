@@ -15,14 +15,15 @@ public class player : moveablePiece {
     public tile playerTile;
     public GameObject playerGameObject;
     public Transform playerWheelTransform;
-    private int points;
+    public static int[] points = { 0, 0, 0, 0 };
+
     public void AddPoints(int p)
     {
-        points += p;
+        points[playerNumber-1] += p;
     }
     public int GetPoints()
     {
-        return points;
+        return points[playerNumber - 1];
     }
 
     public void SetAlive(bool t)
