@@ -17,6 +17,7 @@ public class hexGrid  {
     public bool autoAllocate = false;
     public int unitCount = 2; // how many units does each player get? 
 
+    // Could aos vary the amount of points that can be on a tile
 
     private float offsetX, offsetY;
     private float standardDelay = 0.01f;
@@ -29,6 +30,7 @@ public class hexGrid  {
         this.x = x;
         this.y = y;
     }
+    // Create the grid
     public IEnumerator CreateHexShapedGrid(GameObject hexTile, int gridRadius = 3, List<tile> tileList = null, Sprite[] tileSprites = null, List<player> playerList = null)
         {
 

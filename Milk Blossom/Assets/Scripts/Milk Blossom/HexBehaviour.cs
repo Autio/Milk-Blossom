@@ -7,6 +7,7 @@ public class HexBehaviour : MonoBehaviour {
     bool paused = false;
     bool tileDrop = false;
     float dropCounter = 0.1f;
+
 	// Use this for initialization
 	void Start () {
 	    iTween.MoveBy(this.gameObject, iTween.Hash("z", 0.15, "easeType", "easeInOutCubic", "loopType", "pingPong", "delay", .02));

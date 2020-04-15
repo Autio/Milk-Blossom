@@ -15,7 +15,7 @@ public class tile {
         bool highlighted = false;
         public int highlightColor;
         public GameObject tileObject;
-        public int[] moveValues = new int[4]; // How valuable are the moves 
+        public int[] moveValues = new int[4]; // How valuable are the moves for players 1-4 
         public GameObject tilePointsObject;
         
         void drawPoints()
@@ -73,7 +73,7 @@ public class tile {
                 tilePointsObject.SetActive(false);
 
             }
-
+            // 
 
         }
 
