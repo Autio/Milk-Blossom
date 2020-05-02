@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class tile {
+public class Tile {
 
         public Vector3 cubePosition;
         public Vector2 offsetPosition;

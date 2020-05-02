@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using TMPro;
 
 public class DebugTooltip : MonoBehaviour {
 
     public string debugText;
-    public TextMesh debugToolTip;
+    public TextMeshPro debugToolTip;
 	// Use this for initialization
 	void Start () {
 	
@@ -12,6 +13,7 @@ public class DebugTooltip : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        debugToolTip.text = debugText;
+		// Change this to a callback
+	    debugToolTip.text = debugText;
 	}
 }

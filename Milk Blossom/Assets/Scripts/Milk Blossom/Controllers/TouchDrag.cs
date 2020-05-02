@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TouchDrag : ControlManager {
+public class TouchDrag : InputController {
     // Replicating mouse drag but for touch
     private float startTime;
     private float journeyLength;
@@ -11,14 +11,14 @@ public class TouchDrag : ControlManager {
     Vector3 zOffset = new Vector3(0, 0, -0.5f);
     enum dragStates { inactive, returning, movingToTarget, idle };
     dragStates currentState;
-    MilkBlossom GameController;
+    GameController GameController;
     int sourceTileIndex;
     int targetTileIndex;
     // Use this for initialization
     void Start()
     {
         currentState = dragStates.idle;
-        GameController = GameObject.Find("GameController").GetComponent<MilkBlossom>();
+        GameController = GameObject.Find("GameController").GetComponent<GameController>();
     }
 
     // Update is called once per frame
@@ -119,7 +119,7 @@ public class TouchDrag : ControlManager {
                 // Get tileindex by looking up position
                 int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), GameManager.tileList);
                 Debug.Log("Move to tile " + i.ToString());
-                player arg = new player();
+                Player arg = new Player();
 
                 // Try action on the basis of the index
                 if (GameController.CheckMove(i))

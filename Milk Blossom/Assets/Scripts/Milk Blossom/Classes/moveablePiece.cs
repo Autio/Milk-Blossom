@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class moveablePiece : MonoBehaviour {
+public class MoveablePiece : MonoBehaviour {
 
     // Any object that can be moved on the board: Player, enemy, obstacle - depending on game
 

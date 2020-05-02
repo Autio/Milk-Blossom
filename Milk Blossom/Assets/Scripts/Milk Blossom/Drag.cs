@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Drag : ControlManager {
+public class Drag : InputController {
 
     // Make this a child of the touch manager and handle mouse vs touch more intelligently here. 
     // Don't have separate classes for mouse and touch
@@ -15,7 +15,7 @@ public class Drag : ControlManager {
     Vector3 zOffset = new Vector3(0, 0, -0.5f);
     enum dragStates {inactive, returning, movingToTarget, idle};
     dragStates currentState;
-    MilkBlossom GameController;
+    GameController GameController;
     int sourceTileIndex = 0;
     int targetTileIndex;
     bool touch;
@@ -24,7 +24,7 @@ public class Drag : ControlManager {
     {
         touch = false;
         currentState = dragStates.idle;
-        GameController = GameObject.Find("GameController").GetComponent<MilkBlossom>();
+        GameController = GameObject.Find("GameController").GetComponent<GameController>();
     }
 
     // MOUSE 
@@ -209,7 +209,7 @@ public class Drag : ControlManager {
                 // Get tileindex by looking up position
                 int i = GameController.liveHexGrid.GetTileIndexByPos(new Vector2(a.transform.position.x, a.transform.position.y), GameManager.tileList);
                 Debug.Log("Move to tile " + i.ToString());
-                player arg = new player();
+                Player arg = new Player();
 
                 // Try action on the basis of the index
                 if (GameController.CheckMove(i))

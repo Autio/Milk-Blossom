@@ -2,22 +2,39 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class hexGrid  {
+public class HexGrid  {
 
     // what needs to be public here?
     int x = 5;
     int y = 5;
-    public float radius = 0.5f;
-    public bool useAsInnerCircleRadius = true;
+    float hexRadius = 0.5f;
+    bool useAsInnerCircleRadius = true;
     int tileCount = 0;
-    public int playerCount = 2; // count, not index
-    public int AIPlayerCount;
-    public GameObject playerObj;
-    public GameObject[] pointsObjects;
-    public bool autoAllocate = false;
-    public int unitCount = 2; // how many units does each player get? 
+    int playerCount = 2; // count, not index
+    int AIPlayerCount;
+    GameObject playerObject;
+    GameObject[] pointsObjects;
+    int unitCount = 2; // how many units does each player get? 
 
-    // Could aos vary the amount of points that can be on a tile
+    public bool autoAllocate = false;
+
+    // Constructor
+    public HexGrid(int x, int y, float hexRadius, bool useAsInnerCircleRadius, int playerCount, int AIPlayerCount, int unitCount, GameObject playerObject, GameObject[] pointsObjects)
+    {
+
+        this.x = x;
+        this.y = y;
+        this.hexRadius = hexRadius;
+        this.useAsInnerCircleRadius = useAsInnerCircleRadius;
+        this.playerCount = playerCount;
+        this.AIPlayerCount = AIPlayerCount;
+        this.unitCount = unitCount;
+        this.playerObject = playerObject;
+        this.pointsObjects = pointsObjects;
+
+    }
+
+    // Could also vary the amount of points that can be on a tile
 
     private float offsetX, offsetY;
     private float standardDelay = 0.01f;
@@ -31,11 +48,11 @@ public class hexGrid  {
         this.y = y;
     }
     // Create the grid
-    public IEnumerator CreateHexShapedGrid(GameObject hexTile, int gridRadius = 3, List<tile> tileList = null, Sprite[] tileSprites = null, List<player> playerList = null)
+    public IEnumerator CreateHexShapedGrid(GameObject hexTile, int gridRadius = 3, List<Tile> tileList = null, Sprite[] tileSprites = null, List<Player> playerList = null)
         {
 
-            float delayModifier = 0.8f;
-            float unitLength = (useAsInnerCircleRadius) ? (radius / Mathf.Sqrt(3) / 2) : radius;
+            float delayModifier = 0.8f; // Delay for animations
+            float unitLength = (useAsInnerCircleRadius) ? (hexRadius / Mathf.Sqrt(3) / 2) : hexRadius;
 
             offsetX = unitLength * Mathf.Sqrt(3);
             offsetY = unitLength * 1.5f;
@@ -49,7 +66,7 @@ public class hexGrid  {
                 for (int r = r1; r <= r2; r++)
                 {
                     // instantiate tile
-                    tile newTile = new tile();
+                    Tile newTile = new Tile();
                     newTile.index = tileCount;
                     tileList.Add(newTile);
                     tileCount++;
@@ -95,10 +112,10 @@ public class hexGrid  {
         // Players should be allocated manually, but if not you can also randomly allocate them:
         if (autoAllocate)
         {
-            AutoAllocatePlayers(playerObj, tileList, playerList);
+            AutoAllocatePlayers(playerObject, tileList, playerList);
         } else
         {
-            CreatePlayers(playerObj, playerList, playerCount, unitCount);
+            CreatePlayers(playerObject, playerList, playerCount, unitCount);
         }
             // Set starting player 
             // 2: This shouldn't always be the human player, should it?
@@ -107,7 +124,7 @@ public class hexGrid  {
         }
 
         // Place the points onto the tiles at the start of a level 
-        public void AllocatePoints(List<tile> tileList = null)
+        public void AllocatePoints(List<Tile> tileList = null)
         {
 
             int[] pool = new int[3];
@@ -119,12 +136,12 @@ public class hexGrid  {
             }
             pool[0] += tileCount - pool[0] - pool[1] - pool[2];
 
-            List<tile> choosableTiles = new List<tile>(tileList);
+            List<Tile> choosableTiles = new List<Tile>(tileList);
             for (int t = 0; t < tileList.Count; t++)
             {
 
                 // randomly choose tile that hasn't been chosen before
-                tile chosenTile = choosableTiles[Random.Range(0, choosableTiles.Count - 1)];
+                Tile chosenTile = choosableTiles[Random.Range(0, choosableTiles.Count - 1)];
                 int attempts = 20;
                 // create points in tiles
                 while (chosenTile.points <= 0)
@@ -161,7 +178,7 @@ public class hexGrid  {
         }
 
     // Instantiate player on screen
-    void CreatePlayers(GameObject playerObject, List<player> playerList = null, int playerCount = 1, int unitCount = 2)
+    void CreatePlayers(GameObject playerObjectect, List<Player> playerList = null, int playerCount = 1, int unitCount = 2)
     {
         // Location of player token should be in a preset array
         // relative to the screen edge
@@ -180,12 +197,12 @@ public class hexGrid  {
                 // create all the units of one player side by side
                 GameObject newPlayer = 
                     (GameObject)UnityEngine.MonoBehaviour.Instantiate
-                    (playerObject, new Vector3(playerAnchor.transform.position.x + j * xBuffer, 
+                    (playerObjectect, new Vector3(playerAnchor.transform.position.x + j * xBuffer, 
                     playerAnchor.transform.position.y - i - j * yBuffer, -0.5f), Quaternion.identity);
 
                 // set player text
                 newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + (p).ToString() + "_" + (u).ToString();
-                player pl = new player();
+                Player pl = new Player();
                 playerList.Add(pl); // This means that the playerlist does not map one-to-one between players and player units. i.e. the 2nd entry can still be for player 1
                 pl.playerNumber = p; // Not so obvious anymore... Depends on how many units a player gets
                 pl.unitNumber = u;
@@ -197,12 +214,11 @@ public class hexGrid  {
                     Debug.Log("Player " + p.ToString() + " set to AI");
                 }
 
-                // first player always a human? Should be randomised
+                // TODO: first player always a human? Should be randomised
                 if (p == 1)
                 {
                     if (!pl.GetAI())
                     {
-
                         pl.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                     }
                 }
@@ -212,12 +228,12 @@ public class hexGrid  {
     }
 
     // Automatic allocation
-    public void AutoAllocatePlayers(GameObject playerObject, List<tile> tileList = null, List<player> playerList = null)
+    public void AutoAllocatePlayers(GameObject playerObjectect, List<Tile> tileList = null, List<Player> playerList = null)
         {
             // legitimate tiles are the ones with one point only
-            List<tile> validAllocationTiles = new List<tile>();
+            List<Tile> validAllocationTiles = new List<Tile>();
 
-            foreach (tile t in tileList)
+            foreach (Tile t in tileList)
             {
                 if (t.points == 1)
                 {
@@ -235,17 +251,17 @@ public class hexGrid  {
                     {
                         break;
                     }
-                    tile chosenTile = validAllocationTiles[Random.Range(0, validAllocationTiles.Count)];
+                    Tile chosenTile = validAllocationTiles[Random.Range(0, validAllocationTiles.Count)];
                     if (!chosenTile.GetOccupied())
                     {
                         // allocate player on tile
                         Debug.Log("allocating player");
                         //yield return new WaitForSeconds(standardDelay);
-                        GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObject, new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, -0.5f), Quaternion.identity);
+                        GameObject newPlayer = (GameObject)UnityEngine.MonoBehaviour.Instantiate(playerObjectect, new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, -0.5f), Quaternion.identity);
                         // set player text
                         newPlayer.transform.Find("PlayerSprite").transform.Find("PlayerLabel").GetComponent<TextMesh>().text = "P" + p.ToString();
                         chosenTile.SetOccupied(true);
-                        player pl = new player();
+                        Player pl = new Player();
                         playerList.Add(pl);
                         pl.playerNumber = p;
                         pl.playerTile = chosenTile;
@@ -279,7 +295,7 @@ public class hexGrid  {
 
         }
 
-        public void CreateGrid(GameObject hexTile, List<tile> tileList = null)
+        public void CreateGrid(GameObject hexTile, List<Tile> tileList = null)
         {
             tileCount = x * y;
             // Would there need to be a variety of methods here depending on the hex grid type?
@@ -290,7 +306,7 @@ public class hexGrid  {
                 for (int j = 0; j < y; j++)
                 {
                     Vector2 hexPos = HexOffset(i, j);
-                    tile newTile = new tile();
+                    Tile newTile = new Tile();
 
                     // convert coords to cube format based on whether row amount is odd or even
                     newTile.cubePosition = OddRToCube(i, j);
@@ -316,7 +332,7 @@ public class hexGrid  {
         }
 
         // Tidy up activity when leaving the tile
-        public void leaveTile(tile tileToLeave)
+        public void leaveTile(Tile tileToLeave)
         {
             tileToLeave.SetOccupied(true); // Occupied for the purposes of checking
             tileToLeave.SetValidMove(false);
@@ -325,9 +341,8 @@ public class hexGrid  {
 
         }
 
-        public void enterTile(tile tileToEnter)
+        public void enterTile(Tile tileToEnter)
         {
-
             tileToEnter.SetOccupied(true);
             tileToEnter.SetValidMove(false);
         }
@@ -408,7 +423,7 @@ public class hexGrid  {
 
         }
 
-        public void DisplayIndices(List<tile> tileList = null)
+        public void DisplayIndices(List<Tile> tileList = null)
         {
             // simply number tiles
             for (int i = 0; i < tileList.Count; i++)
@@ -421,7 +436,7 @@ public class hexGrid  {
                 Debug.Log("DisplayIndices method being passed a blank tileList");
             }
         }
-        public void DisplayCoords(List<tile> tileList = null)
+        public void DisplayCoords(List<Tile> tileList = null)
         {
             // cubic coords
             for (int i = 0; i < tileList.Count; i++)
@@ -434,7 +449,7 @@ public class hexGrid  {
                 Debug.Log("DisplayCoords method being passed a blank tileList");
             }
     }
-        public void DisplayPoints(List<tile> tileList = null)
+        public void DisplayPoints(List<Tile> tileList = null)
         {
             // points
             for (int i = 0; i < tileList.Count; i++)
@@ -447,7 +462,7 @@ public class hexGrid  {
             }
     }
 
-        public void DisplayMoveValues(int a, List<tile> tileList = null)
+        public void DisplayMoveValues(int a, List<Tile> tileList = null)
         {
             for (int i = 0; i < tileList.Count; i++)
             {
@@ -459,7 +474,7 @@ public class hexGrid  {
         }
     }
 
-        public void DisplayClear(List<tile> tileList = null)
+        public void DisplayClear(List<Tile> tileList = null)
         {
             // clear all
             for (int i = 0; i < tileList.Count; i++)
@@ -472,9 +487,9 @@ public class hexGrid  {
             }
     }
     
-    public int GetTileIndexByPos(Vector2 pos, List<tile> tileList)
+    public int GetTileIndexByPos(Vector2 pos, List<Tile> tileList)
     {
-        foreach (tile t in tileList)
+        foreach (Tile t in tileList)
         {
             if (t.offsetPosition == pos)
             {
