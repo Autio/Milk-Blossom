@@ -4,9 +4,7 @@ using UnityEngine;
 
 public class Drag : InputController {
 
-    // Make this a child of the touch manager and handle mouse vs touch more intelligently here. 
-    // Don't have separate classes for mouse and touch
-
+    // Main code used for touch control
     private float startTime;
     private float journeyLength;
     Vector3 startPos;
@@ -16,6 +14,7 @@ public class Drag : InputController {
     enum dragStates {inactive, returning, movingToTarget, idle};
     dragStates currentState;
     GameController GameController;
+    SoundController SoundController;
     int sourceTileIndex = 0;
     int targetTileIndex;
     bool touch;
@@ -25,6 +24,8 @@ public class Drag : InputController {
         touch = false;
         currentState = dragStates.idle;
         GameController = GameObject.Find("GameController").GetComponent<GameController>();
+        SoundController = GameObject.Find("SoundController").GetComponent<SoundController>();
+
     }
 
     // MOUSE 
@@ -83,8 +84,11 @@ public class Drag : InputController {
                 currentState = dragStates.returning;
                 if (CheckMove())
                 {
+                    // The move is valid 
                     currentState = dragStates.movingToTarget;
                     GameController.ClearHighlights();
+                    // Play appropriate sound
+                    SoundController.PlayerMoveSound();
                 }
                 else
                 {

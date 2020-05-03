@@ -100,7 +100,7 @@ public class HexGrid  {
 
                 }
                 tileList[t].tileObject.transform.parent = GameObject.Find("HexGrid").transform;
-               // tileList[t].tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = superSecretMessage[t].ToString();
+               
                 yield return new WaitForSeconds(standardDelay);
             }
 
@@ -162,7 +162,7 @@ public class HexGrid  {
                                 float zOffset = 0.1f;
                                 GameObject pointsObject = (GameObject)UnityEngine.MonoBehaviour.Instantiate(pointsObjects[k], new Vector3(chosenTile.tileObject.transform.position.x, chosenTile.tileObject.transform.position.y, zOffset), Quaternion.identity);
                                 chosenTile.tilePointsObject = pointsObject;
-                                // AddDebugText(chosenTile.tileObject, chosenTile.points.ToString());
+                                
                                 choosableTiles.Remove(chosenTile);
 
                             }

@@ -125,6 +125,8 @@ public class GameController : MonoBehaviour
     public GameObject opponentCountText;
     public GameObject difficultyText;
 
+    // Sounds
+    SoundController SoundController;
 
     // LOAD RESOURCES
     void Awake()
@@ -138,6 +140,8 @@ public class GameController : MonoBehaviour
     {
         // DEFAULT TO ENGLISH - add menu options for other languages. Looks like the folder needs to be different if running on Android. 
         LocalisationManager.Instance.LoadLocalisedText("English.json");
+        SoundController = GameObject.Find("SoundController").GetComponent<SoundController>();
+
         Debug.Log(LocalisationManager.Instance.GetLocalisedValue("game_title"));
 
         for (int c = 0; c < 3; c++)
@@ -160,18 +164,24 @@ public class GameController : MonoBehaviour
 
     }
 
+    /// <summary>
+    /// STARTING MENU SCREEN
+    /// </summary>
+
     // Settings that player can adjust
     // Single player version 
     public void IncrementAIOpponentCount()
     {
         AIPlayerCount++;
-        // Assume maximum 4 players
+        // Assume maximum 4 players. 
+        // Player count governs how many players there are in total
         if(AIPlayerCount > 3)
         {
             AIPlayerCount = 1;
         }
         opponentCountText.GetComponent<TMP_Text>().text = AIPlayerCount.ToString();
     }
+
     // AI difficulty setting
     public void ChangeDifficulty()
     {
@@ -190,8 +200,8 @@ public class GameController : MonoBehaviour
             // TODO: Actually change difficulty level of AI
         }
     }
-
-
+    
+    // Run from the start game button
     public void InitGame()
     {
         // create grid class, allocate points and allocate players
@@ -200,7 +210,7 @@ public class GameController : MonoBehaviour
             hexGrid_y,
             hexRadius,
             useAsInnerCircleRadius,
-            playerCount,
+            (AIPlayerCount + 1), // For the vs AI version, there's just 1 player plus AIs 
             AIPlayerCount,
             unitCount,
             playerObject,
@@ -210,12 +220,13 @@ public class GameController : MonoBehaviour
         // Instantiate grid and spawn players to the side of the board
         StartCoroutine(liveHexGrid.CreateHexShapedGrid(hexTile, hexGridRadius, GameManager.tileList, tileSprites, playerList));
 
-        // once game is setup, the placement phase begins
+        // Once the game is setup, the placement phase begins
         StartCoroutine(switchState(GameManager.states.placing, 3.4f));
 
-        // set player amounts
+        // Adjust player amounts
         for (int i = 0; i < playerCount; i++)
         {
+            // Draw score objects
             if (i < 2)
             {
                 scoreObjects[i].transform.GetComponent<Text>().text = "P" + (i + 1).ToString() + "\n" + "0";
@@ -227,6 +238,10 @@ public class GameController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// MAIN GAME LOOP
+    /// </summary>
+    /// 
     // Update is called once per frame
     void Update()
     {
@@ -242,6 +257,8 @@ public class GameController : MonoBehaviour
             Toolbox.Instance.SpawnText("HELLO WORLD", new Vector3(0,0, -4.0f), 2.5f, 0.5f, 0.1f);
             StartCoroutine(Pause(0.5f, GameManager.states.live));
         }
+
+        // Manage game loops
         if (GameManager.Instance.currentState == GameManager.states.placing)
         {
             Placing();
@@ -265,16 +282,16 @@ public class GameController : MonoBehaviour
         // Set valid placement tiles on each update cycle
 
         Player activePlayer = null;
+
         // If the active player is a human, then do human placement
         if (!playerList[activePlayerIndex].GetAI())
         {
             AllAllowedPlacements();
 
-            // Allow draggability of the correct playerunit only
-            // unit index should increment when last player flips to first one
+            // Allow draggability of the correct player unit only
+            // Unit index should increment when last player flips to first one
             // The dragging itself happens with the Drag class
             SetPlayerPlacementDraggability(activeUnitIndex + 1);
-            // MakePlacement();
         }
         // If the active player is an AI, do AI placement
         else
@@ -291,49 +308,20 @@ public class GameController : MonoBehaviour
     void Live()
     {
         gameLiveTime += Time.deltaTime;
+
         // Main game loop
         // One player at a time selects one of their units from the board and makes a legitimate move
-        // Points are counted from beneath
+        // Points are counted from beneath the tiles that are left
+        // Moves are made until NO player can move any of their units
+        // There should be a separate phase in the code for this clean-up phase
 
-        // ClearHighlights();
-        // Only highlight player unit tiles when the unit isn't being dragged
-        // Don't do this every cycle
-
-           // HighlightPlayerUnitTiles(activePlayerIndex);
-        
 
         if(playerList[activePlayerIndex].GetAI())
         {
-            // make AI move
+            // make AI move for AI players only
             AIMove(diff);
         }
-        /*
-        turnCooldown -= Time.deltaTime;
-        if (turnCooldown < 0)
-        {
-            // check if it's AI's turn to go
-            if (playerList[activePlayerIndex].GetAI())
-            {
-                turnCooldown = 0.75f;              IncrementActivePlayer();
-                AIMove(playerList[activePlayerIndex]);
-
-            }
-            else
-            {
-                turnCooldown = 0.03f;
-            }
-        }
-        */
-
-        /*if(firstTurn)
-        {
-            // Should highlight the units of the active player's units
-            // And when that unit is picked up, all the valid move tiles should be highlighted
-            HighlightPlayerUnitTiles(activePlayerIndex);
-            AllAllowedMoves(activeTile);
-            firstTurn = false;
-        }*/
-
+      
         // TURN TIMER
         // only count for human players
         if (timed)
@@ -355,7 +343,6 @@ public class GameController : MonoBehaviour
                     ClearHighlights();
 
                 }
-
             }
         }
     }
@@ -375,30 +362,32 @@ public class GameController : MonoBehaviour
             }
 
         }
+        // TODO: Display the game over canvas and panel instead. This should loop to the beginning
         endText.transform.GetComponent<Text>().text = "ENDED\nPlayer " + hiPlayer.ToString() + "\nWins";
     }
 
     // MAIN GAME FLOW - END
-    // PLACEMENT AND MOVEMENT FUNCTIONS
+
+    /// <summary>
+    /// PLACEMENT AND MOVEMENT FUNCTIONS
+    /// </summary>
+
     public void SetPlayerDraggability()
     {
         foreach (Player p in playerList)
         {
             if (p.playerNumber != (activePlayerIndex + 1)) // +1 is correct
             {
-                //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
-                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
+                p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false; // Drag controls touch and mouse
             }
             else
             {
                 if (p.GetAI())
                 {
-                    //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
                 }
                 else
                 {
-                    //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
                     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                 }
             }
@@ -420,7 +409,6 @@ public class GameController : MonoBehaviour
         {
             if (p.playerNumber != ((activePlayerIndex) % playerCount) + 1) // +1 is correct
             {
-                //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                 p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
                 p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.grey;
 
@@ -429,17 +417,15 @@ public class GameController : MonoBehaviour
             {
                 if (p.GetAI())
                 {
-                    //     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = false;
                     p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = false;
                 }
                 else
                 {
                     if (p.unitNumber == unitNumber)
                     {
-                        //   p.playerGameObject.transform.Find("PlayerSprite").GetComponent<TouchDrag>().enabled = true;
                         p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Drag>().enabled = true;
                         // Highlight the sprite
-                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.blue;
+                        p.playerGameObject.transform.Find("PlayerSprite").GetComponent<Renderer>().material.color = Color.blue; // Adjust highlight colours
                     }
                     else
 
@@ -455,7 +441,9 @@ public class GameController : MonoBehaviour
     // Player Incrementation
     void IncrementActivePlayer()
     {
+        // How do we handle this when there are no valid moves? 
         activePlayerIndex++;
+
         // Cycle back to the start 
         if (activePlayerIndex >= playerCount)
         {
@@ -480,13 +468,15 @@ public class GameController : MonoBehaviour
                 {
                     
                     Debug.Log("No valid moves for player " + (activePlayerIndex + 1).ToString() + " unit " + p.unitNumber.ToString()); // +1 correct
+
                     if (p.GetAlive())
                     {
-                        // can't make moves
+                        // Can't make moves
                         // player UNIT is taken out of circulation
                         p.SetAlive(false);
                         p.DeathThroes();
 
+                        // If any players remain alive, the game should continue
                         if (CheckPlayersAlive())
                         {
                             IncrementActivePlayer();
@@ -680,6 +670,9 @@ public class GameController : MonoBehaviour
         yield return new WaitForSeconds(delay);
         liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
         p.playerTile = GameManager.tileList[tileIndex];
+        // Play placement sound
+        SoundController.AIPlaceSound();
+
         IncrementPlacementPlayer();
         GameManager.Instance.currentState = GameManager.states.placing;
 
@@ -865,6 +858,8 @@ public class GameController : MonoBehaviour
         GameManager.Instance.currentState = GameManager.states.moving;
         StartCoroutine(AIPlacementRoutine(p, targetTileIndex, delay));
 
+
+
     }
 
     void AIMove(difficulty d)
@@ -874,9 +869,6 @@ public class GameController : MonoBehaviour
         int maxValue = 0;
         int targetTileIndex = 0;
         Player p = null;
-
-
-
 
         if (d == difficulty.easy)
         {
@@ -920,6 +912,9 @@ public class GameController : MonoBehaviour
             }
 
         }
+        // Play movement sound
+        Debug.Log("AI move sound should play here");
+        SoundController.AIMoveSound();
 
         // Leave previous tile
         liveHexGrid.leaveTile(p.playerTile);
@@ -934,6 +929,8 @@ public class GameController : MonoBehaviour
 
         StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
             2.5f, GameManager.states.live));
+
+
 
         IncrementActivePlayer();
 
@@ -1508,8 +1505,8 @@ public class GameController : MonoBehaviour
     // HELPER FUNCTIONS
     private bool CheckPlayersAlive()
     {
-        // As long as there's a single player left alive, return true
-        for (int p = 0; p < playerCount; p++)
+        // As long as there's a single player left alive (= with one unit able to move), return true
+        for (int p = 0; p < playerList.Count; p++)
         {
             if (playerList[p].GetAlive())
             {
@@ -1624,7 +1621,7 @@ public class GameController : MonoBehaviour
                         Debug.Log(t.tileObject);
                         try {
                             Debug.Log("Found tile debug text");
-                            t.tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = moveVal.ToString();
+                            //t.tileObject.transform.Find("DebugText").gameObject.GetComponent<DebugTooltip>().debugText = moveVal.ToString();
                         }
                         catch {
                             Debug.Log("Could not find the text");

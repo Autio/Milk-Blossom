@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+// Doesn't seem to be active?
 public class TouchDrag : InputController {
     // Replicating mouse drag but for touch
     private float startTime;
@@ -17,6 +18,8 @@ public class TouchDrag : InputController {
     // Use this for initialization
     void Start()
     {
+
+
         currentState = dragStates.idle;
         GameController = GameObject.Find("GameController").GetComponent<GameController>();
     }
@@ -94,6 +97,8 @@ public class TouchDrag : InputController {
         if (CheckMove())
         {
             currentState = dragStates.movingToTarget;
+  
+
         }
         else
         {
@@ -124,6 +129,7 @@ public class TouchDrag : InputController {
                 // Try action on the basis of the index
                 if (GameController.CheckMove(i))
                 {
+
                     return true;
                 }
                 else
