@@ -308,7 +308,7 @@ public class GameController : MonoBehaviour
     void Live()
     {
         gameLiveTime += Time.deltaTime;
-
+        Debug.Log("activePlayerIndex: " + activePlayerIndex);
         // Main game loop
         // One player at a time selects one of their units from the board and makes a legitimate move
         // Points are counted from beneath the tiles that are left
@@ -316,11 +316,26 @@ public class GameController : MonoBehaviour
         // There should be a separate phase in the code for this clean-up phase
 
 
-        if(playerList[activePlayerIndex].GetAI())
+        // For each unit we check the AI, otherwise we just wait for player input
+        // However we should skip AI moves if the AI has no moves to make
+        if (ValidMovesForPlayer(activePlayerIndex))
         {
-            // make AI move for AI players only
-            AIMove(diff);
+            if (playerList[activePlayerIndex].GetAI())
+            {
+
+                // make AI move for AI players only
+                AIMove(diff);
+            }
         }
+        else
+        {
+            IncrementActivePlayer();
+            // TODO: Notify if the human player is out of moves
+            // TODO: AI actions slightly differently when human players are unable to move
+        }
+        
+
+        // Also check if the player has valiud moves 
       
         // TURN TIMER
         // only count for human players
@@ -457,15 +472,18 @@ public class GameController : MonoBehaviour
         ClearHighlights();
         HighlightPlayerUnitTiles(activePlayerIndex);
 
-        // Go through all players
+        bool gameOver = true;
+        // Goes through all player units
         foreach(Player p in playerList)
         {
             // If the unit belongs to the active player 
-            if(p.playerNumber == (activePlayerIndex + 1))
+
+            // See if the unit has any valid moves left, if not then disable that unit
+            if (!ValidMovesForUnit(p))
             {
-                // See if the unit has any valid moves left, if not then disable that unit
-                if(!ValidMoves(p))
+                if (p.playerNumber == (activePlayerIndex + 1))
                 {
+
                     
                     Debug.Log("No valid moves for player " + (activePlayerIndex + 1).ToString() + " unit " + p.unitNumber.ToString()); // +1 correct
 
@@ -475,26 +493,24 @@ public class GameController : MonoBehaviour
                         // player UNIT is taken out of circulation
                         p.SetAlive(false);
                         p.DeathThroes();
-
-                        // If any players remain alive, the game should continue
-                        if (CheckPlayersAlive())
-                        {
-                            IncrementActivePlayer();
-                        }
-                        else
-                        {
-                            // transition to end state
-                            StartCoroutine(switchState(GameManager.states.ending, 2.0f));
-                        }
                     }
+                    
                 }
 
 
             }
             else
             {
-                Debug.Log("All fine");
+                gameOver = false;
             }
+
+        }
+
+        if(gameOver)
+        {
+            // If all players are out of it then transition to end state
+            StartCoroutine(switchState(GameManager.states.ending, 2.0f));
+
         }
 
     }
@@ -707,6 +723,7 @@ public class GameController : MonoBehaviour
         unit.playerGameObject.transform.position = targetPos;
 
         StartCoroutine(switchState(GameManager.states.live));
+
         // Only once object has moved, do we increment to the next player
         yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();
@@ -874,8 +891,9 @@ public class GameController : MonoBehaviour
         {
             foreach (Player pl in playerList)
             {
-                if (pl.playerNumber == (activePlayerIndex + 1))
+                if (pl.playerNumber == (activePlayerIndex + 1) && ValidMovesForUnit(pl))
                 {
+
                     // This unit belongs to the active player
                     // Evaluate all possible tiles
                     EvaluateTileValues(false);
@@ -901,15 +919,17 @@ public class GameController : MonoBehaviour
                 }
             }
 
+       
             // Decide between units
             // Basic decision: highest points value always wins
             foreach (Player pl in playerList)
             {
-                if (pl.unitNumber == preferredUnit && pl.playerNumber == activePlayerIndex + 1)
+                if (pl.unitNumber == preferredUnit && pl.playerNumber == (activePlayerIndex + 1))
                 {
                     p = pl;
                 }
             }
+
 
         }
         // Play movement sound
@@ -930,22 +950,7 @@ public class GameController : MonoBehaviour
         StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
             2.5f, GameManager.states.live));
 
-
-
         IncrementActivePlayer();
-
-        /*
-        // see if a move is feasible
-        if (ValidMoves(p))
-        {
-            if (GameManager.Instance.currentState == GameManager.states.live)
-            {
-                GameManager.Instance.currentState = GameManager.states.paused;
-                switchState(GameManager.states.moving, 0.2f);
-                targetTile = PseudoAIMove(p);
-             //   MakeMove(p, targetTile);
-            }
-        }*/
 
     }
 
@@ -982,7 +987,7 @@ public class GameController : MonoBehaviour
                     // check the tile by cycling all tiles
                     for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
-                        // blank out mmove value for tiles
+                        // blank out move value for tiles
                         GameManager.tileList[i].moveValues[activePlayerIndex] = 0;
                         if (GameManager.tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
                         {
@@ -1343,8 +1348,8 @@ public class GameController : MonoBehaviour
     }
 
 
-    // if switching to player, check if any valid moves are available
-    public bool ValidMoves(Player p)
+    // if switching to player unit, check if any valid moves are available
+    public bool ValidMovesForUnit(Player p)
     {
         for (int d = 0; d < directions.Length; d++)
         {
@@ -1364,7 +1369,26 @@ public class GameController : MonoBehaviour
 
         return false;
     }
-   
+
+    public bool ValidMovesForPlayer(int playerIndex)
+    {
+        bool result = false;
+        foreach (Player p in playerList)
+        {
+            if (p.playerNumber == playerIndex + 1)
+            {
+                if(ValidMovesForUnit(p))
+                {
+                    // At least one unit of this player can move
+                    result = true;
+                }
+            }
+        
+        }
+
+        return result;
+    }
+
 
     public void AllAllowedMoves(Tile sourceTile)
     {
@@ -1515,6 +1539,8 @@ public class GameController : MonoBehaviour
         }
         return false;
     }
+
+
     // Could be done with the state machine instead - 20170624
     IEnumerator switchState(GameManager.states s, float delay = 0.0f)
     {
