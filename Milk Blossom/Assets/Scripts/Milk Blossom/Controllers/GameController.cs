@@ -133,7 +133,7 @@ public class GameController : MonoBehaviour
     void Awake()
     {
         // ART
-        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2_gray");
+        tileSprites = (Sprite[])Resources.LoadAll<Sprite>("Sprites\\HexSprite2");
     }
 
     // MAIN GAME FLOW - START ->
