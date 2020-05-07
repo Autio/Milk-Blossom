@@ -30,20 +30,20 @@ public class GameController : MonoBehaviour
     // Timer    
     // Overall aesthetic
 
-        /* ---- To do 29/6/2017 ----
-         * Proper handling of mouse movement -> make sure effects on grid are comprehensive
-         * Make startup loop faster
-         * Merge touch functionality to be parallel to mouse functionality
-         * Test on phone
-         * 
-         * Map out separation of game logic
-         * Finish game loop
-         * Get unit art
-         * Improve AI
-         * Juice: Pop-up texts
-         * Research / brainstorm juiciness
-         * Think about audio: soundtrack & effects 
-         */
+    /* ---- To do 29/6/2017 ----
+     * Proper handling of mouse movement -> make sure effects on grid are comprehensive
+     * Make startup loop faster
+     * Merge touch functionality to be parallel to mouse functionality
+     * Test on phone
+     * 
+     * Map out separation of game logic
+     * Finish game loop
+     * Get unit art
+     * Improve AI
+     * Juice: Pop-up texts
+     * Research / brainstorm juiciness
+     * Think about audio: soundtrack & effects 
+     */
 
     // AI for enemies: 
     // first scan straight line options
@@ -51,7 +51,7 @@ public class GameController : MonoBehaviour
     // tiles with three points available, in which case prioritise those for the move
     // if no three point tiles are available, do the same for two point tiles, 
     // else do it for one point tiles
-                                                            
+
 
     // further ideas
     // just let players do as many turns as feasible, don't worry about isolated areas (though
@@ -78,7 +78,7 @@ public class GameController : MonoBehaviour
 
     public enum difficulty { easy, hard }
     private difficulty diff = difficulty.easy;
-        
+
     // Objects specific to Milk Blossom
     public GameObject[] pointsObjects;
     public GameObject hexTile;
@@ -96,7 +96,7 @@ public class GameController : MonoBehaviour
     public int hexGridRadius = 3;
     private int targetRange = 2;
     private float turnCooldown = 0.3f;
-    private float moveCoolDown = 2.0f;
+    private float moveCoolDown = .2f;
     public float turnTimeLimit = 10f;
     private float turnTimeCounter = 0;
     public bool useAsInnerCircleRadius = true;
@@ -114,7 +114,7 @@ public class GameController : MonoBehaviour
     static List<Player> playerList = new List<Player>();
     public int activePlayerIndex = 0;
     public int activeUnitIndex = 0;
-    
+
 
     // ART & VISUAL
     static Sprite[] tileSprites;
@@ -151,10 +151,10 @@ public class GameController : MonoBehaviour
         }
 
         mainCam = GameObject.Find("Main Camera").GetComponent<Camera>();
-        
+
         // Only if we need timed turns
         timerBar = GameObject.Find("TimerBar");
-   
+
         // Direction mapping
         directions[0] = new Vector3(+1, -1, 0);
         directions[1] = new Vector3(+1, 0, -1);
@@ -176,7 +176,7 @@ public class GameController : MonoBehaviour
         AIPlayerCount++;
         // Assume maximum 4 players. 
         // Player count governs how many players there are in total
-        if(AIPlayerCount > 3)
+        if (AIPlayerCount > 3)
         {
             AIPlayerCount = 1;
         }
@@ -186,12 +186,12 @@ public class GameController : MonoBehaviour
     // AI difficulty setting
     public void ChangeDifficulty()
     {
-        if(diff == difficulty.hard)
+        if (diff == difficulty.hard)
         {
             Debug.Log("Changing to Easy");
             diff = difficulty.easy;
             difficultyText.GetComponent<TMP_Text>().text = "Easy";
-            
+
             // TODO: Actually change difficulty level of AI
         } else if (diff == difficulty.easy)
         {
@@ -201,7 +201,7 @@ public class GameController : MonoBehaviour
             // TODO: Actually change difficulty level of AI
         }
     }
-    
+
     // Run from the start game button
     public void InitGame()
     {
@@ -253,9 +253,9 @@ public class GameController : MonoBehaviour
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
-        if(Input.GetKey(KeyCode.T))
+        if (Input.GetKey(KeyCode.T))
         {
-            Toolbox.Instance.SpawnText("HELLO WORLD", new Vector3(0,0, -4.0f), 2.5f, 0.5f, 0.1f);
+            Toolbox.Instance.SpawnText("HELLO WORLD", new Vector3(0, 0, -4.0f), 2.5f, 0.5f, 0.1f);
             StartCoroutine(Pause(0.5f, GameManager.states.live));
         }
 
@@ -264,11 +264,13 @@ public class GameController : MonoBehaviour
         {
             Placing();
         }
-        
+
         if (GameManager.Instance.currentState == GameManager.states.live)
         {
             Live();
         }
+
+
         if (GameManager.Instance.currentState == GameManager.states.ending)
         {
             Ending();
@@ -276,7 +278,7 @@ public class GameController : MonoBehaviour
     }
 
     void Placing()
-    { 
+    {
 
         // Allow placement of units by dragging from the side onto single piece tiles
         // In player order: 1st, 2nd, 3rd etc then back to 1st
@@ -296,10 +298,10 @@ public class GameController : MonoBehaviour
         }
         // If the active player is an AI, do AI placement
         else
-       {
+        {
             // TESTING AI PLACEMENT
             activePlayer = playerList[activePlayerIndex];
-            AIPlace(activePlayer, 1.0f);    
+            AIPlace(activePlayer, 1.0f);
         }
         // Check what should happen next:
         // Player places a unit. If the unit is placed, it no longer can be dragged in placement! 
@@ -309,6 +311,7 @@ public class GameController : MonoBehaviour
     void Live()
     {
         gameLiveTime += Time.deltaTime;
+        moveCoolDown -= Time.deltaTime;
         Debug.Log("activePlayerIndex: " + activePlayerIndex);
         // Main game loop
         // One player at a time selects one of their units from the board and makes a legitimate move
@@ -316,37 +319,41 @@ public class GameController : MonoBehaviour
         // Moves are made until NO player can move any of their units
         // There should be a separate phase in the code for this clean-up phase
 
-
-        // For each unit we check the AI, otherwise we just wait for player input
-        // However we should skip AI moves if the AI has no moves to make
-        if (ValidMovesForPlayer(activePlayerIndex))
+        if(moveCoolDown < 0)
         {
-            if (playerList[activePlayerIndex].GetAI())
+            moveCoolDown = 0.33f;
+ 
+            // For each unit we check the AI, otherwise we just wait for player input
+            // However we should skip AI moves if the AI has no moves to make
+            if (ValidMovesForPlayer(activePlayerIndex))
             {
-                // make AI move for AI players only
-                // Make them fast if it's only AI playing
-                if (OnlyAI())
+                if (playerList[activePlayerIndex].GetAI())
                 {
-                    AIMove(diff, true);
-                }
-                else
-                {
-                    AIMove(diff, false);
+                    // make AI move for AI players only
+                    // Make them fast if it's only AI playing
+                    if (OnlyAI())
+                    {
+                        AIMove(diff, true);
+                    }
+                    else
+                    {
+                        AIMove(diff, false);
 
+                    }
                 }
             }
-        }
-        else
-        {
-            IncrementActivePlayer();
+            else
+            {
+                //StartCoroutine(IncrementActivePlayerCoroutine(2f));
+                IncrementActivePlayer();
 
-            // TODO: Notify if the human player is out of moves
-            // TODO: AI actions slightly differently when human players are unable to move
+                // TODO: Notify if the human player is out of moves
+                // TODO: AI actions slightly differently when human players are unable to move
+            }
         }
-        
 
         // Also check if the player has valiud moves 
-      
+
         // TURN TIMER
         // only count for human players
         if (timed)
@@ -463,6 +470,11 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private IEnumerator IncrementActivePlayerCoroutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        IncrementActivePlayer();
+    }
     // Player Incrementation
     void IncrementActivePlayer()
     {
@@ -631,15 +643,26 @@ public class GameController : MonoBehaviour
         // GameManager.Instance.currentState = s;
     }
 
-    private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f, GameManager.states s = GameManager.states.paused)
+    private IEnumerator Move_Routine(Transform transform, Vector3 from, Vector3 to, float duration = 1.0f, GameManager.states s = GameManager.states.paused, bool fast = false)
     {
-        float t = 0f;
-        yield return new WaitForSeconds(0.2f);
-        while (t < duration)
+        if(fast)
         {
-            t += Time.deltaTime;
-            transform.position = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
-            yield return null;
+            transform.position = to;
+        }
+        else
+        {
+            float t = 0f;
+            if (duration >= 1.0f)
+            {
+                yield return new WaitForSeconds(0.2f);
+            }
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                transform.position = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, t));
+                yield return null;
+            }
+
         }
 
         // Switch back to live only after the move is completed
@@ -735,7 +758,6 @@ public class GameController : MonoBehaviour
         StartCoroutine(switchState(GameManager.states.live));
 
         // Only once object has moved, do we increment to the next player
-        yield return new WaitForSeconds(0.2f);
         IncrementActivePlayer();
 
     }
@@ -961,7 +983,7 @@ public class GameController : MonoBehaviour
         if(fast)
         {
             StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
-                .2f, GameManager.states.live));
+                .23f, GameManager.states.live, false));
 
         } else
         {
@@ -970,6 +992,7 @@ public class GameController : MonoBehaviour
         }
 
         IncrementActivePlayer();
+        //StartCoroutine(IncrementActivePlayerCoroutine(2f));
 
     }
 
