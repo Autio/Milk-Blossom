@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class player : moveablePiece {
+public class Player : MoveablePiece {
 
     [Range(1, 4)]
     public int playerNumber; // Which player does this unit belong to? Number, not index
@@ -12,7 +12,7 @@ public class player : moveablePiece {
     bool alive = true;
     Vector3 cubePosition;
     Vector2 offsetPosition;
-    public tile playerTile;
+    public Tile playerTile;
     public GameObject playerGameObject;
     public Transform playerWheelTransform;
     public static int[] points = { 0, 0, 0, 0 };

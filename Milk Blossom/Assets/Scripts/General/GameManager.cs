@@ -14,7 +14,7 @@ public class GameManager : Singleton<GameManager>
     public controlOptions[] activeControlOptions = new controlOptions[3];
 
     // MAIN LIST OF ALL TILES ON BOARD
-    public static List<tile> tileList = new List<tile>(); // master list of tiles
+    public static List<Tile> tileList = new List<Tile>(); // master list of tiles
 
     Vector3[] directions = new Vector3[6];
     [Range(0, 5)]
@@ -40,7 +40,7 @@ public class GameManager : Singleton<GameManager>
         return directions[dir];
     }
 
-    Vector3 CubeNeighbour(tile hex, int dir)
+    Vector3 CubeNeighbour(Tile hex, int dir)
     {
         Vector3 newPosition = hex.cubePosition + directions[dir];
         return newPosition;
