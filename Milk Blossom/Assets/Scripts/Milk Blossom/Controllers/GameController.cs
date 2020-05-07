@@ -114,6 +114,7 @@ public class GameController : MonoBehaviour
     static List<Player> playerList = new List<Player>();
     public int activePlayerIndex = 0;
     public int activeUnitIndex = 0;
+    
 
     // ART & VISUAL
     static Sprite[] tileSprites;
@@ -322,14 +323,23 @@ public class GameController : MonoBehaviour
         {
             if (playerList[activePlayerIndex].GetAI())
             {
-
                 // make AI move for AI players only
-                AIMove(diff);
+                // Make them fast if it's only AI playing
+                if (OnlyAI())
+                {
+                    AIMove(diff, true);
+                }
+                else
+                {
+                    AIMove(diff, false);
+
+                }
             }
         }
         else
         {
             IncrementActivePlayer();
+
             // TODO: Notify if the human player is out of moves
             // TODO: AI actions slightly differently when human players are unable to move
         }
@@ -879,7 +889,7 @@ public class GameController : MonoBehaviour
 
     }
 
-    void AIMove(difficulty d)
+    void AIMove(difficulty d, bool fast = false)
     {
         // Go through all units of the player and then decide which one to move and where
         int preferredUnit = 0;
@@ -947,8 +957,17 @@ public class GameController : MonoBehaviour
 
         GameManager.Instance.currentState = GameManager.states.moving;
 
-        StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
-            2.5f, GameManager.states.live));
+        // Faster moves when only AI players are active
+        if(fast)
+        {
+            StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
+                .2f, GameManager.states.live));
+
+        } else
+        {
+            StartCoroutine(Move_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(tl.offsetPosition.x, tl.offsetPosition.y, p.playerGameObject.transform.position.z),
+                2.5f, GameManager.states.live));
+        }
 
         IncrementActivePlayer();
 
@@ -1527,6 +1546,19 @@ public class GameController : MonoBehaviour
 
     // -----------------------------------
     // HELPER FUNCTIONS
+
+    private bool OnlyAI()
+    {
+        foreach(Player p in playerList)
+        {
+            if(p.GetAlive() && !p.GetAI())
+            {
+                // If there's even one player unit alive, then it's not only AI in the game
+                return false;
+            }
+        }
+        return true;
+    }
     private bool CheckPlayersAlive()
     {
         // As long as there's a single player left alive (= with one unit able to move), return true
