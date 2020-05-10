@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using UnityEngine;
 
 public class Tile {
@@ -11,11 +12,12 @@ public class Tile {
         public int index;
         bool active = true;
         public bool occupied = false;
+        public Player occupyingPlayer { get; set; }
         bool validMove = false;
         bool highlighted = false;
         public int highlightColor;
         public GameObject tileObject;
-        public int[] moveValues = new int[4]; // How valuable are the moves for players 1-4 
+        public int[] moveValues = new int[4]; // How valuable are the moves
         public GameObject tilePointsObject;
         
         void drawPoints()

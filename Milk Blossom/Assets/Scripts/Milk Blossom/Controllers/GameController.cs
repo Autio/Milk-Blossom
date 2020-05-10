@@ -608,7 +608,7 @@ public class GameController : MonoBehaviour
         }
 
         Debug.Log("Placing " + s + " to tile index " + targetTileIndex.ToString());
-        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
+        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex], placementPlayer);
         placementPlayer.playerTile = GameManager.tileList[targetTileIndex];
 
         ClearHighlights();
@@ -649,6 +649,7 @@ public class GameController : MonoBehaviour
 
     public void MakeMove(int sourceTileIndex = 0, int targetTileIndex = 0, int playerIndex = 0)
     {
+        // What is this for? 
         Player p = null;
         if(playerIndex == 0)
         {
@@ -664,6 +665,8 @@ public class GameController : MonoBehaviour
             }
             
         }
+        // TODO:
+        // p seems to come out blank
      
 
         // update scores
@@ -671,7 +674,7 @@ public class GameController : MonoBehaviour
 
         liveHexGrid.leaveTile(GameManager.tileList[sourceTileIndex]);
         activeTile = GameManager.tileList[targetTileIndex];
-        liveHexGrid.enterTile(activeTile);
+        liveHexGrid.enterTile(activeTile, p);
         p.playerTile = GameManager.tileList[targetTileIndex];
         Debug.Log("Setting player " + p.playerNumber.ToString() + " unit " + p.unitNumber.ToString() + " to tile of index " + targetTileIndex.ToString());
 
@@ -694,7 +697,7 @@ public class GameController : MonoBehaviour
         StartCoroutine(Place_Routine(p.playerGameObject.transform, p.playerGameObject.transform.position, new Vector3(t.offsetPosition.x, t.offsetPosition.y, 
             p.playerGameObject.transform.position.z), 2.5f, GameManager.states.placing));
         yield return new WaitForSeconds(delay);
-        liveHexGrid.enterTile(GameManager.tileList[tileIndex]);
+        liveHexGrid.enterTile(GameManager.tileList[tileIndex], p);
         p.playerTile = GameManager.tileList[tileIndex];
         // Play placement sound
         SoundController.AIPlaceSound();
@@ -906,7 +909,7 @@ public class GameController : MonoBehaviour
 
                     // This unit belongs to the active player
                     // Evaluate all possible tiles
-                    EvaluateTileValues(false);
+                    EvaluateTileValues(true);
 
                     // Set allowed moves based on unit location
                     AllAllowedMoves(pl.playerTile);
@@ -951,7 +954,7 @@ public class GameController : MonoBehaviour
         AcquirePoints(p.playerTile, p);
 
         // Enter next one
-        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex]);
+        liveHexGrid.enterTile(GameManager.tileList[targetTileIndex], p);
         p.playerTile = GameManager.tileList[targetTileIndex];
         Tile tl = p.playerTile;
 
@@ -1065,11 +1068,14 @@ public class GameController : MonoBehaviour
         int thirdMoveWeight = 1;
 
         Tile targetTile;
-        List<Tile> potentialTiles = new List<Tile>();
+        List<Tile> potentialTiles       = new List<Tile>();
         List<Tile> potentialSecondTiles = new List<Tile>();
+        List<Tile> potentialThirdTiles  = new List<Tile>();
+
 
         List<int> tileValues = new List<int>();
 
+        // Maximum range is the grid diameter
         int maxRange = hexGridRadius * 2;
         // brute forcing it
         // unit contains own position?
@@ -1084,12 +1090,11 @@ public class GameController : MonoBehaviour
         // output could be a value assigned to each tile
 
         // first move valuation on the basis of the points on that tile
-        // for every direction
+        // For every direction
         for (int d = 0; d < directions.Length; d++)
         {
             bool hitSnag = false;
-            // for each tile in range
-
+            // For each tile in range
             for (int r = 1; r <= maxRange; r++)
             {
                 if (!hitSnag)
@@ -1099,7 +1104,7 @@ public class GameController : MonoBehaviour
                     // check the tile by cycling all tiles
                     for (int i = 0; i < GameManager.tileList.Count; i++)
                     {
-                        // blank out mmove value for tiles
+                        // Blank out move value for tiles
                         GameManager.tileList[i].moveValues[activePlayerIndex] = 0;
                         if (GameManager.tileList[i].cubePosition == p.playerTile.cubePosition + relativeDir)
                         {
@@ -1146,6 +1151,7 @@ public class GameController : MonoBehaviour
                 }
             }
         }
+
 
         // Think of the move +2
         // starting thinking of the move +1 
@@ -1621,14 +1627,22 @@ public class GameController : MonoBehaviour
         // Parameters
         // Immediate tile bias - how to prioritise the guaranteed points from the tile you are about to move to
         int immediateTileBias = 2;
-
+        int playerThreatBias = 3; // How much value should be added for each player accessing the tile
 
         // Go through all tiles 
         foreach (Tile t in GameManager.tileList)
         {
             moveVal = 0;
             t.moveValues[0] = moveVal;
-
+            List<Player> playersWhoCanAccessMe = new List<Player>();
+            // If other players are within range of me, then I'm more valuable
+            if(t.GetOccupied())
+            {
+                if(!playersWhoCanAccessMe.Contains(t.occupyingPlayer))
+                {
+                    playersWhoCanAccessMe.Add(t.occupyingPlayer);
+                }
+            }
             // Only evaluate if the tile isn't occupied - if it's occupied it can't be reached anyway
             if (!t.GetOccupied())
             {           
@@ -1642,18 +1656,25 @@ public class GameController : MonoBehaviour
                 for (int i = 0; i < directions.Length; i++)
                 {
                     bool dirBlocked = false;
-                    for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board
+                    for (int r = 1; r <= (hexGridRadius * 2); r++) // works for hex shaped board 
+                    // TODO: Standard grid distance
                     // Could just go until it errors out? 
+
                     {
                         Vector3 relPosition = directions[i] * r;
                         foreach (Tile t2 in GameManager.tileList)
                         {
                             if (t2.cubePosition == t.cubePosition + relPosition)
                             {
+
                                 if (t2.GetActive() && !t2.GetOccupied())
                                 {
                                     if (t2 != t)
                                     {
+                                        // Assign the value of this move
+                                        // Should be a balance of: 
+                                        // Points you can gain
+                                        // Enemy points you can block
                                         moveVal += t2.points;
                                     }
                                 }
@@ -1671,7 +1692,28 @@ public class GameController : MonoBehaviour
                             break;
                         }
                     }
+                   
+                    
+                    // Assign value of first step
                     t.moveValues[0] = moveVal;
+
+                    // Lists the index of players who can access this tile and adds to the tile move value by the count of them
+                    List<int> playerThreats = new List<int>();
+                    // Augment value by player threat level
+                    foreach(Player p in playersWhoCanAccessMe)
+                    {
+                        if(!playerThreats.Contains(p.playerNumber))
+                        {
+                            playerThreats.Add(p.playerNumber);
+                        }
+                    }
+
+                    for (int j = 0; j < playerThreats.Count; j++)
+                    {
+                        Debug.Log("Increasing the move value for tile " + t.index + " by " + playerThreatBias.ToString() +  " due to player " + playerThreats[i].ToString() + " being able to reach it");
+                        t.moveValues[0] += playerThreatBias;
+                    }
+
                     // Display move value
                     if(show)
                     {
@@ -1693,6 +1735,17 @@ public class GameController : MonoBehaviour
 
         }// 
     }
+
+    int TilePoints(Tile tile)
+    {
+        // I'm a tile
+        // My value is comprised of:
+        // My own Gems (with a multiplier?)
+        // How many points my diagonals contain in total
+        // How many players' units could grab me next turn (with some weighted multiplier)
+        return 1;
+    }
+
 
     Vector3 CubeDirection(int dir)
     {

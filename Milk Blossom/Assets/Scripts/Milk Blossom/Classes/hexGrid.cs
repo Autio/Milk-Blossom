@@ -338,13 +338,15 @@ public class HexGrid  {
             tileToLeave.SetValidMove(false);
             tileToLeave.SetActive(false);
             tileToLeave.tileObject.SetActive(false);
+            tileToLeave.occupyingPlayer = null;
 
         }
 
-        public void enterTile(Tile tileToEnter)
+        public void enterTile(Tile tileToEnter, Player p)
         {
             tileToEnter.SetOccupied(true);
             tileToEnter.SetValidMove(false);
+            tileToEnter.occupyingPlayer = p;
         }
 
 
